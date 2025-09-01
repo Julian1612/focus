@@ -1,3 +1,4 @@
+/* CSS Reset und Grund-Setup */
 :root {
     --bg-color: #1c1c1e;
     --card-color: #2c2c2e;
@@ -6,13 +7,6 @@
     --accent-color: #af52de;
     --border-color: #3a3a3c;
     --success-color: #32d74b;
-    /* NEUE Farbvariablen für Themen */
-    --color-deepwork-bg: rgba(175, 82, 222, 0.2);
-    --color-deepwork-border: #af52de;
-    --color-meeting-bg: rgba(50, 173, 230, 0.2);
-    --color-meeting-border: #32ade6;
-    --color-privat-bg: rgba(48, 209, 88, 0.2);
-    --color-privat-border: #30d158;
 }
 
 *, *::before, *::after {
@@ -35,6 +29,7 @@ body {
     display: flex;
 }
 
+/* Hauptlayout: Seitenleiste und Inhaltsbereich */
 .sidebar {
     width: 60px;
     height: 100vh;
@@ -182,17 +177,11 @@ body {
 .todo-item {
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .todo-item:last-child {
     border-bottom: none;
-}
-
-/* NEU: Styling für die aktive Aufgabe */
-.todo-item.active-task {
-    background-color: rgba(175, 82, 222, 0.1);
-    box-shadow: inset 3px 0 0 0 var(--accent-color);
 }
 
 .todo-item-main {
@@ -503,6 +492,7 @@ body {
     margin-top: 2rem;
 }
 
+/* GEÄNDERT: Styling für Timer-Animation */
 #global-controls-container {
     position: fixed;
     top: 1.5rem;
@@ -593,6 +583,8 @@ body {
     position: absolute;
     left: 5px;
     right: 5px;
+    background-color: rgba(175, 82, 222, 0.2);
+    border: 1px solid var(--accent-color);
     border-radius: 6px;
     padding: 5px;
     font-size: 0.9rem;
@@ -601,20 +593,6 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-}
-
-/* NEU: Dynamisches Styling für Planer-Events */
-.planner-event[data-category="deepwork"] {
-    background-color: var(--color-deepwork-bg);
-    border-color: var(--color-deepwork-border);
-}
-.planner-event[data-category="meeting"] {
-    background-color: var(--color-meeting-bg);
-    border-color: var(--color-meeting-border);
-}
-.planner-event[data-category="privat"] {
-    background-color: var(--color-privat-bg);
-    border-color: var(--color-privat-border);
 }
 
 .planner-event-text {
@@ -697,27 +675,3 @@ body {
     font-weight: 500;
     cursor: pointer;
 }
-
-/* NEU: Styling für Kategorie-Auswahl */
-.category-selector {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-.category-btn {
-    flex-grow: 1;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-color);
-    color: var(--text-secondary);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.category-btn.active {
-    border-color: var(--accent-color);
-    color: var(--text-primary);
-    background-color: var(--card-color);
-    font-weight: 500;
-}
-
