@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fokus Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Verknüpfung zur CSS-Datei -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <button class="sidebar-btn" id="focus-fm-btn" title="Fokus FM"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" /></svg></button>
+        <button class="sidebar-btn" id="routine-btn" title="Meine Routine"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h7.5M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg></button>
+        <button class="sidebar-btn" id="focus-session-btn" title="Fokussitzung"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
+        <button class="sidebar-btn" id="planner-btn" title="Tagesplaner"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h22.5" /></svg></button>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-controls-container">
+            <div id="timer-progress-band" style="display: none;"></div>
+            <div id="global-timer-display" style="display: none;">00:00</div>
+            <button id="global-start-next-btn" style="display: block;">▶ Nächste</button>
+        </div>
+        
+        <div class="header-progress-container">
+            <div class="progress-bar" id="header-progress-bar"></div>
+        </div>
+
+        <header class="dashboard-header">
+            <div>
+                <h1 id="greeting">Guten Tag</h1>
+                <p>Planen Sie Ihren Tag und bleiben Sie fokussiert.</p>
+            </div>
+        </header>
+
+        <div class="todo-widgets">
+            <section class="todo-card">
+                <h2>Vormittag</h2>
+                <form class="add-todo-form" data-list="vormittag">
+                    <input type="text" placeholder="Neue Aufgabe..." required>
+                    <input type="number" placeholder="min" min="1" required>
+                    <button type="submit">+</button>
+                </form>
+                <ul class="todo-list" id="list-vormittag" data-list-type="active"></ul>
+                <hr class="completed-divider" id="divider-vormittag" style="display: none;">
+                <ul class="todo-list completed-list" id="completed-list-vormittag" data-list-type="completed"></ul>
+            </section>
+
+            <section class="todo-card">
+                <h2>Nachmittag</h2>
+                <form class="add-todo-form" data-list="nachmittag">
+                    <input type="text" placeholder="Neue Aufgabe..." required>
+                    <input type="number" placeholder="min" min="1" required>
+                    <button type="submit">+</button>
+                </form>
+                <ul class="todo-list" id="list-nachmittag" data-list-type="active"></ul>
+                <hr class="completed-divider" id="divider-nachmittag" style="display: none;">
+                <ul class="todo-list completed-list" id="completed-list-nachmittag" data-list-type="completed"></ul>
+            </section>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="modal-focus-fm"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Fokus FM</h2><div class="video-container"><iframe src="https://www.youtube.com/embed/-z77ikRecGI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div></div>
+    <div class="modal-overlay" id="modal-routine"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Meine Routine</h2><ul id="routine-list"></ul></div></div>
+    <div class="modal-overlay" id="modal-focus-session"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Fokussitzung</h2><div id="timer-display-container"><div id="timer-display">25:00</div><button id="start-next-task-btn" style="display: none;">Nächste Aufgabe starten</button></div><div class="timer-controls"><button id="timer-control-btn">Pause</button><button id="timer-cancel-btn">Abbrechen</button></div><div class="progress-section"><h3>Tagesfortschritt</h3><div class="progress-time-display" id="progress-time">0m / 0m</div><div class="progress-bar-container"><div class="progress-bar" id="daily-progress-bar"></div></div></div><button id="new-day-btn">Neuer Tag</button></div></div>
+
+    <div class="modal-overlay" id="modal-planner">
+        <div class="modal-content" style="max-width: 800px;">
+            <button class="modal-close-btn">&times;</button>
+            <h2>Tagesplaner</h2>
+            <div class="planner-container">
+                <div class="planner-timeline"></div>
+                <div class="planner-grid"></div>
+            </div>
+            <div class="input-modal-overlay" id="planner-input-modal" style="display: none;">
+                <div class="input-modal-content">
+                    <h3>Neues Ereignis</h3>
+                    <input type="text" id="planner-input-text" placeholder="Aufgabenname eingeben...">
+                    <div class="category-selector">
+                        <button class="category-btn active" data-category="deepwork">Deepwork</button>
+                        <button class="category-btn" data-category="meeting">Meeting</button>
+                        <button class="category-btn" data-category="privat">Privat</button>
+                    </div>
+                    <button id="planner-input-save">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verknüpfung zur JavaScript-Datei -->
+    <script src="script.js" defer></script>
+</body>
+</html>
