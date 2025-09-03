@@ -18,7 +18,7 @@
             --border-color: #3a3a3c;
             --success-color: #32d74b;
 
-            /* NEU: Farb-Variablen für Kategorien */
+            /* Farb-Variablen für Kategorien */
             --cat-focus-bg: rgba(175, 82, 222, 0.2);
             --cat-focus-border: #af52de;
             --cat-meeting-bg: rgba(94, 92, 230, 0.2);
@@ -72,8 +72,9 @@
             margin-left: 60px;
             padding: 2rem;
             height: 100vh;
-            overflow-y: auto;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-btn {
@@ -132,20 +133,24 @@
             overflow: hidden;
             z-index: 150;
         }
-
+        
         .todo-widgets {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 2rem;
             align-items: stretch;
+            flex-grow: 1;
+            min-height: 0;
         }
 
+        /* ANGEPASST: Die entscheidende Regel für das Layout */
         .todo-card {
             background-color: var(--card-color);
             border-radius: 12px;
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
+            min-height: 0; /* Verhindert, dass die Karte größer wird als der Grid-Bereich */
         }
 
         .todo-card h2 {
@@ -157,7 +162,7 @@
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1.5rem;
-            flex-wrap: wrap; /* Erlaubt Umbruch bei Platzmangel */
+            flex-wrap: wrap; 
         }
 
         .add-todo-form input, .add-todo-form select {
@@ -168,7 +173,7 @@
             padding: 0.5rem 0.75rem;
             font-family: inherit;
             font-size: 1rem;
-            height: 38px; /* Einheitliche Höhe */
+            height: 38px;
         }
 
         .add-todo-form input[type="text"] {
@@ -179,7 +184,6 @@
             width: 70px;
         }
 
-        /* NEU: Styling für das Kategorie-Dropdown */
         .add-todo-form select {
             width: 120px;
             -webkit-appearance: none;
@@ -205,17 +209,28 @@
         .add-todo-form button:hover {
             background-color: #9647c5;
         }
-
+        
+        .todo-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        
         .todo-list {
             list-style: none;
             padding: 0;
-            flex-grow: 1;
         }
 
         .todo-item {
-            padding: 0.5rem 0;
+            padding: 0.5rem;
             border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.2s ease;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .todo-item.timer-active {
+            background-color: rgba(175, 82, 222, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(175, 82, 222, 0.3);
         }
 
         .todo-item:last-child {
@@ -363,11 +378,6 @@
         }
         .add-subtask-form button:hover {
             background-color: #9647c5;
-        }
-
-        .todo-item.dragging {
-            opacity: 0.5;
-            background: var(--accent-color);
         }
 
         .modal-overlay {
@@ -550,6 +560,9 @@
             color: var(--accent-color);
             padding: 0.5rem 1rem;
             border-radius: 8px;
+            font-variant-numeric: tabular-nums;
+            min-width: 70px;
+            text-align: center;
         }
 
         #timer-progress-band {
@@ -587,6 +600,28 @@
             border-radius: 8px;
             user-select: none;
         }
+        
+        .planner-container::-webkit-scrollbar,
+        .todo-list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .planner-container::-webkit-scrollbar-track,
+        .todo-list-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .planner-container::-webkit-scrollbar-thumb,
+        .todo-list-container::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .planner-container::-webkit-scrollbar-thumb:hover,
+        .todo-list-container::-webkit-scrollbar-thumb:hover {
+            background-color: var(--text-secondary);
+        }
+
 
         .planner-timeline {
             width: 60px;
@@ -614,15 +649,15 @@
             flex-grow: 1;
             position: relative;
             background-image: repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 30px), repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 60px);
-            min-height: 840px; /* 14 hours * 60px/hour */
+            min-height: 840px; 
         }
 
         .planner-event {
             position: absolute;
             left: 5px;
             right: 5px;
-            background-color: var(--cat-focus-bg); /* Standardfarbe */
-            border: 1px solid var(--cat-focus-border); /* Standardfarbe */
+            background-color: var(--cat-focus-bg);
+            border: 1px solid var(--cat-focus-border);
             border-radius: 6px;
             padding: 5px;
             font-size: 0.9rem;
@@ -634,7 +669,6 @@
             transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         
-        /* NEU: Dynamische Event-Farben */
         .planner-event[data-category="focus"] { background-color: var(--cat-focus-bg); border-color: var(--cat-focus-border); }
         .planner-event[data-category="meeting"] { background-color: var(--cat-meeting-bg); border-color: var(--cat-meeting-border); }
         .planner-event[data-category="privat"] { background-color: var(--cat-privat-bg); border-color: var(--cat-privat-border); }
@@ -771,7 +805,6 @@
                     <div class="input-modal-content">
                         <h3>Neues Ereignis</h3>
                         <input type="text" id="planner-input-text" placeholder="Aufgabenname eingeben...">
-                        <!-- NEU: Kategorie-Auswahl im Modal -->
                         <select id="planner-input-category"></select>
                         <button id="planner-input-save">Speichern</button>
                     </div>
@@ -780,16 +813,17 @@
 
             <section class="todo-card">
                 <h2>To-Dos</h2>
-                <form class="add-todo-form">
-                    <input type="text" placeholder="Neue Aufgabe..." required>
-                    <input type="number" placeholder="min" min="1" required>
-                    <!-- NEU: Kategorie-Auswahl im Formular -->
-                    <select id="add-todo-category"></select>
-                    <button type="submit">+</button>
-                </form>
-                <ul class="todo-list" id="list-all-todos" data-list-type="active"></ul>
-                <hr class="completed-divider" id="divider-all-todos" style="display: none;">
-                <ul class="todo-list completed-list" id="completed-list-all-todos" data-list-type="completed"></ul>
+                <div class="todo-list-container">
+                    <form class="add-todo-form">
+                        <input type="text" placeholder="Neue Aufgabe..." required>
+                        <input type="number" placeholder="min" min="1" required>
+                        <select id="add-todo-category"></select>
+                        <button type="submit">+</button>
+                    </form>
+                    <ul class="todo-list" id="list-all-todos" data-list-type="active"></ul>
+                    <hr class="completed-divider" id="divider-all-todos" style="display: none;">
+                    <ul class="todo-list completed-list" id="completed-list-all-todos" data-list-type="completed"></ul>
+                </div>
             </section>
         </div>
     </main>
@@ -803,7 +837,6 @@
             let activeSubtaskForm = null;
             let totalDurationForProgress = 0;
             
-            // NEU: Zentrale Konfiguration der Kategorien
             const CATEGORIES = {
                 focus: { name: 'Focus Work', color: '#af52de' },
                 meeting: { name: 'Meeting', color: '#5e5ce6' },
@@ -833,7 +866,6 @@
                 allTodos: document.getElementById('divider-all-todos')
             };
             const form = document.querySelector('.add-todo-form');
-            // NEU: Referenz auf Kategorie-Dropdowns
             const addTodoCategorySelect = document.getElementById('add-todo-category');
             const plannerInputCategorySelect = document.getElementById('planner-input-category');
 
@@ -873,7 +905,7 @@
             const HOUR_HEIGHT = 60;
 
             function init() {
-                populateCategorySelects(); // Dropdowns befüllen
+                populateCategorySelects();
                 setGreeting();
                 loadState();
                 renderAll();
@@ -885,7 +917,6 @@
                 renderPlannerEvents();
             }
 
-            // NEU: Funktion zum Befüllen der Kategorie-Dropdowns
             function populateCategorySelects() {
                 [addTodoCategorySelect, plannerInputCategorySelect].forEach(select => {
                     select.innerHTML = '';
@@ -898,7 +929,6 @@
                 });
             }
 
-
             function setGreeting() {
                 const hour = new Date().getHours();
                 if (hour < 12) greetingElement.textContent = 'Guten Morgen';
@@ -906,11 +936,9 @@
                 else greetingElement.textContent = 'Guten Abend';
             }
 
-            // ANGEPASST: `loadState` für Abwärtskompatibilität
             function loadState() {
                 const savedTodosData = JSON.parse(localStorage.getItem('focusDashboard_todos'));
                 if (savedTodosData) {
-                    // Standardkategorie hinzufügen, falls nicht vorhanden
                     savedTodosData.vormittag.forEach(t => { if (!t.category) t.category = 'focus'; });
                     savedTodosData.nachmittag.forEach(t => { if (!t.category) t.category = 'focus'; });
                     state.todos = savedTodosData;
@@ -921,12 +949,10 @@
                 if (savedTime) state.totalTimeWorked = parseInt(savedTime, 10);
                 const savedPlannerEvents = JSON.parse(localStorage.getItem('focusDashboard_plannerEvents'));
                 if (savedPlannerEvents) {
-                    // Standardkategorie hinzufügen, falls nicht vorhanden
                     savedPlannerEvents.forEach(e => { if (!e.category) e.category = 'focus'; });
                     state.plannerEvents = savedPlannerEvents;
                 }
             }
-
 
             function saveState() {
                 localStorage.setItem('focusDashboard_todos', JSON.stringify(state.todos));
@@ -965,7 +991,6 @@
 
                 dividers.allTodos.style.display = completedTasks.length > 0 ? 'block' : 'none';
             }
-
 
             function createTaskElement(todo, listName) {
                 const li = document.createElement('li');
@@ -1040,7 +1065,6 @@
                 plannerGrid.addEventListener('mousedown', handlePlannerInteraction);
             }
 
-            // ANGEPASST: `handleAddTodo` liest Kategorie aus
             function handleAddTodo(e) {
                 e.preventDefault();
                 const textInput = form.querySelector('input[type="text"]');
@@ -1057,7 +1081,7 @@
                     startHour: startHour,
                     startMinutes: startMinutes,
                     durationMinutes: time,
-                    category: selectedCategory // Kategorie speichern
+                    category: selectedCategory
                 };
                 state.plannerEvents.push(newPlannerEvent);
                 
@@ -1205,7 +1229,7 @@
                 timerProgressBand.style.display = timerIsActive ? 'block' : 'none';
                 globalStartNextBtn.style.display = timerIsActive ? 'none' : 'block';
             }
-
+            
             function startTimer(duration, taskItem) {
                 if (state.timer.isRunning) return;
                 
@@ -1213,6 +1237,16 @@
                 timerProgressBand.style.background = 'conic-gradient(var(--accent-color) 360deg, transparent 360deg)';
                 state.timer.secondsLeft = duration;
                 state.timer.isRunning = true;
+                
+                if (state.timer.activeTaskItem) {
+                    state.timer.activeTaskItem.classList.remove('timer-active');
+                }
+                const currentlyActive = document.querySelector('.todo-item.timer-active');
+                if (currentlyActive) {
+                    currentlyActive.classList.remove('timer-active');
+                }
+                taskItem.classList.add('timer-active');
+
                 state.timer.activeTaskItem = taskItem;
                 state.timer.interval = setInterval(updateTimer, 1000);
                 
@@ -1259,6 +1293,10 @@
             }
 
             function resetTimerState() {
+                if (state.timer.activeTaskItem) {
+                    state.timer.activeTaskItem.classList.remove('timer-active');
+                }
+                
                 state.timer.isRunning = false;
                 state.timer.interval = null;
                 state.timer.activeTaskItem = null;
@@ -1314,14 +1352,13 @@
                 }
             }
 
-            // ANGEPASST: `renderPlannerEvents` setzt data-category
             function renderPlannerEvents() {
                 plannerGrid.innerHTML = '';
                 state.plannerEvents.forEach(event => {
                     const eventEl = document.createElement('div');
                     eventEl.className = 'planner-event';
                     eventEl.dataset.id = event.id;
-                    eventEl.dataset.category = event.category || 'focus'; // Setzt data-Attribut
+                    eventEl.dataset.category = event.category || 'focus';
                     eventEl.innerHTML = `<span class="planner-event-text">${event.text}</span><button class="planner-delete-btn">&times;</button><div class="planner-event-resize-handle"></div>`;
                     eventEl.style.top = `${(event.startHour - PLANNER_START_HOUR) * HOUR_HEIGHT + (event.startMinutes || 0)}px`;
                     eventEl.style.height = `${event.durationMinutes}px`;
@@ -1382,7 +1419,6 @@
                 }
             }
             
-            // ANGEPASST: `onPlannerMouseUp` liest Kategorie aus
             function onPlannerMouseUp() {
                 if (!plannerAction.active) return;
                 const targetEl = plannerAction.target;
@@ -1406,7 +1442,7 @@
                                 startHour: 0, 
                                 startMinutes: 0, 
                                 durationMinutes: 0,
-                                category: selectedCategory // Kategorie speichern
+                                category: selectedCategory
                             };
                             state.plannerEvents.push(newEvent);
                             updatePlannerEventFromElementData(newEvent, targetEl.offsetTop, targetEl.offsetHeight);
@@ -1440,7 +1476,6 @@
                 updatePlannerEventFromElementData(event, element.offsetTop, element.offsetHeight);
             }
             
-            // ANGEPASST: `syncPlannerEventToTodo` überträgt Kategorie
             function syncPlannerEventToTodo(plannerEvent) {
                 let correspondingTodo = findTodoById(plannerEvent.todoId, 'vormittag') || findTodoById(plannerEvent.todoId, 'nachmittag');
                 const listName = (plannerEvent.startHour + (plannerEvent.startMinutes / 60)) < 13 ? 'vormittag' : 'nachmittag';
@@ -1453,12 +1488,12 @@
                         notes: '', 
                         completed: false, 
                         time: plannerEvent.durationMinutes,
-                        category: plannerEvent.category // Kategorie übertragen
+                        category: plannerEvent.category
                     };
                     state.todos[listName].push(correspondingTodo);
                 } else {
                     correspondingTodo.time = plannerEvent.durationMinutes;
-                    correspondingTodo.category = plannerEvent.category; // Kategorie aktualisieren
+                    correspondingTodo.category = plannerEvent.category;
                     const otherList = listName === 'vormittag' ? 'nachmittag' : 'vormittag';
                     const indexInOtherList = state.todos[otherList].findIndex(t => t.id === correspondingTodo.id);
                     if (indexInOtherList > -1) {
