@@ -457,6 +457,20 @@
             border-bottom: 1px solid var(--border-color);
         }
 
+        /* NEU: Styling für Routine Überschriften */
+        #routine-list h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+        #routine-list > *:first-child { /* Verhindert doppelten Abstand oben */
+            margin-top: 0;
+        }
+
+
         #timer-display-container {
             margin-bottom: 1rem;
         }
@@ -652,7 +666,6 @@
             min-height: 840px; 
         }
 
-        /* NEU: Zeit-Indikator */
         #time-indicator {
             position: absolute;
             width: 100%;
@@ -863,18 +876,39 @@
 
             const state = {
                 todos: { vormittag: [], nachmittag: [] },
+                // NEU: Strukturierte Routine
                 routine: [
-                    { id: 'r1', text: 'Morgenmeditation', completed: false },
-                    { id: 'r2', text: 'Tagesziele überprüfen', completed: false },
-                    { id: 'r3', text: 'Schreibtisch aufräumen', completed: false },
-                    { id: 'r4', text: 'Feierabend-Reflexion', completed: false }
+                    {
+                        title: 'Morgen-Routine: Klarheit & Fokus',
+                        items: [
+                            { id: 'mr1', text: 'Tages-Check: Kalender, E-Mails und To-Do\'s', completed: false },
+                            { id: 'mr2', text: 'Anknüpfen: Erkenntnisse/Notizen von gestern prüfen', completed: false },
+                            { id: 'mr3', text: 'Zeitblöcke planen: Hinter jede Aufgabe die realistisch geschätzte Zeit eintragen', completed: false },
+                            { id: 'mr4', text: 'Eat the Frog: Starte direkt mit der wichtigsten oder unangenehmsten Aufgabe', completed: false }
+                        ]
+                    },
+                    {
+                        title: 'Arbeitsblöcke: Maximale Effizienz',
+                        items: [
+                            { id: 'ab1', text: 'Fokus-Soundtrack nutzen', completed: false },
+                            { id: 'ab2', text: 'Singletasking: Immer nur an EINER Aufgabe arbeiten', completed: false },
+                            { id: 'ab3', text: 'Bewusste Mikro-Pausen: Nach jedem Sprint 5 Minuten aufstehen', completed: false },
+                            { id: 'ab4', text: 'Hydriert bleiben', completed: false }
+                        ]
+                    },
+                    {
+                        title: 'Feierabend-Routine: Abschalten & Vorbereiten',
+                        items: [
+                            { id: 'fr1', text: 'Brain-Dump für Morgen: Alle offenen Punkte und Ideen festhalten', completed: false },
+                            { id: 'fr2', text: 'Clear-Desk: Arbeitsplatz aufräumen für einen klaren Start', completed: false }
+                        ]
+                    }
                 ],
                 plannerEvents: [],
                 totalTimeWorked: 0,
                 timer: { interval: null, secondsLeft: 1500, isRunning: false, activeTaskItem: null }
             };
 
-            // ... (restlicher JS-Code bleibt gleich bis zur init-Funktion)
             const lists = {
                 allTodos: document.getElementById('list-all-todos'),
                 completedAllTodos: document.getElementById('completed-list-all-todos')
@@ -921,7 +955,6 @@
             const PLANNER_START_HOUR = 7;
             const HOUR_HEIGHT = 60;
 
-            // NEUE FUNKTION: Zeit-Indikator aktualisieren
             function updateCurrentTimeIndicator() {
                 const indicator = document.getElementById('time-indicator');
                 if (!indicator) return;
@@ -929,7 +962,7 @@
                 const now = new Date();
                 const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
                 const plannerStartMinutes = PLANNER_START_HOUR * 60;
-                const plannerEndMinutes = 21 * 60; // 21:00 Uhr
+                const plannerEndMinutes = 21 * 60;
 
                 const currentPositionInMinutes = minutesSinceMidnight - plannerStartMinutes;
 
@@ -952,7 +985,6 @@
                 updateGlobalControlsView();
                 renderPlannerTimeline();
                 renderPlannerEvents();
-                // NEU: Initialer Aufruf und Intervall für den Zeit-Indikator
                 updateCurrentTimeIndicator();
                 setInterval(updateCurrentTimeIndicator, 60000);
             }
@@ -983,8 +1015,13 @@
                     savedTodosData.nachmittag.forEach(t => { if (!t.category) t.category = 'focus'; });
                     state.todos = savedTodosData;
                 }
+                
+                // ANGEPASST: Lädt die neue Routine-Struktur oder setzt den Standard
                 const savedRoutine = JSON.parse(localStorage.getItem('focusDashboard_routine'));
-                if (savedRoutine) state.routine = savedRoutine;
+                if (savedRoutine && Array.isArray(savedRoutine) && savedRoutine[0]?.title) {
+                    state.routine = savedRoutine;
+                } // Ansonsten wird der neue Default aus dem state-Objekt verwendet
+
                 const savedTime = localStorage.getItem('focusDashboard_timeWorked');
                 if (savedTime) state.totalTimeWorked = parseInt(savedTime, 10);
                 const savedPlannerEvents = JSON.parse(localStorage.getItem('focusDashboard_plannerEvents'));
@@ -1068,12 +1105,19 @@
                 });
             }
 
+            // ÜBERARBEITET: rendert die neue Routine-Struktur
             function renderRoutineList() {
                 routineListElement.innerHTML = '';
-                state.routine.forEach(item => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
-                    routineListElement.appendChild(li);
+                state.routine.forEach(section => {
+                    const h3 = document.createElement('h3');
+                    h3.textContent = section.title;
+                    routineListElement.appendChild(h3);
+
+                    section.items.forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
+                        routineListElement.appendChild(li);
+                    });
                 });
             }
 
@@ -1200,11 +1244,21 @@
                     return;
                 }
                 
-                const routineItem = target.closest('#routine-list li');
-                if (routineItem) {
-                    const routine = state.routine.find(r => r.id === target.id);
-                    routine.completed = target.checked;
-                    saveState();
+                // ANGEPASST: Sucht in der neuen Routine-Struktur
+                const routineLi = target.closest('#routine-list li');
+                if (routineLi) {
+                    let foundItem = null;
+                    for (const section of state.routine) {
+                        const item = section.items.find(i => i.id === target.id);
+                        if (item) {
+                            foundItem = item;
+                            break;
+                        }
+                    }
+                    if (foundItem) {
+                        foundItem.completed = target.checked;
+                        saveState();
+                    }
                 }
             }
             
@@ -1393,7 +1447,6 @@
             }
 
             function renderPlannerEvents() {
-                // Clear all but the time indicator
                 const events = plannerGrid.querySelectorAll('.planner-event');
                 events.forEach(e => e.remove());
 
