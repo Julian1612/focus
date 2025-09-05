@@ -830,45 +830,6 @@
             background-color: var(--border-color);
         }
 
-        /* Success Animation */
-        #modal-success .modal-content {
-            background: transparent;
-            text-align: center;
-            color: white;
-            box-shadow: none;
-            border: none;
-        }
-
-        .confetti-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 20px;
-            background-color: var(--accent-color);
-            top: -20px;
-            opacity: 0;
-            animation: fall 5s linear infinite;
-        }
-
-        @keyframes fall {
-            0% {
-                transform: translateY(0vh) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(105vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
     </style>
 </head>
 <body>
@@ -939,13 +900,6 @@
     <div class="modal-overlay" id="modal-focus-fm"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Fokus FM</h2><div class="video-container"><iframe src="https://www.youtube.com/embed/-z77ikRecGI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div></div>
     <div class="modal-overlay" id="modal-routine"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Meine Routine</h2><ul id="routine-list"></ul></div></div>
     <div class="modal-overlay" id="modal-focus-session"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Fokussitzung</h2><div id="timer-display-container"><div id="timer-display">25:00</div><button id="start-next-task-btn" style="display: none;">Nächste Aufgabe starten</button></div><div class="timer-controls"><button id="timer-control-btn">Pause</button><button id="timer-cancel-btn">Abbrechen</button></div><div class="progress-section"><h3>Tagesfortschritt</h3><div class="progress-time-display" id="progress-time">0m / 0m</div><div class="progress-bar-container"><div class="progress-bar" id="daily-progress-bar"></div></div></div><button id="new-day-btn">Neuer Tag</button></div></div>
-    <div class="modal-overlay" id="modal-success">
-        <div class="modal-content">
-            <div class="confetti-container"></div>
-            <h2>Super!</h2>
-            <p>Du hast alle Aufgaben für heute erledigt. Gut gemacht!</p>
-        </div>
-    </div>
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -991,14 +945,13 @@
                 ],
                 plannerEvents: [],
                 totalTimeWorked: 0,
-                timer: { interval: null, secondsLeft: 1500, isRunning: false, isPaused: false, activeTaskItem: null },
-                animationPlayedToday: false
+                timer: { interval: null, secondsLeft: 1500, isRunning: false, isPaused: false, activeTaskItem: null }
             };
             
             const lists = { allTodos: document.getElementById('list-all-todos'), completedAllTodos: document.getElementById('completed-list-all-todos') };
             const dividers = { allTodos: document.getElementById('divider-all-todos') };
             const form = document.querySelector('.add-todo-form');
-            const modals = { focusFm: document.getElementById('modal-focus-fm'), routine: document.getElementById('modal-routine'), focusSession: document.getElementById('modal-focus-session'), success: document.getElementById('modal-success') };
+            const modals = { focusFm: document.getElementById('modal-focus-fm'), routine: document.getElementById('modal-routine'), focusSession: document.getElementById('modal-focus-session') };
             const modalButtons = { focusFm: document.getElementById('focus-fm-btn'), routine: document.getElementById('routine-btn'), focusSession: document.getElementById('focus-session-btn') };
             const timerDisplay = document.getElementById('timer-display');
             const globalTimerDisplay = document.getElementById('global-timer-display');
@@ -1099,8 +1052,6 @@
                     savedPlannerEvents.forEach(e => { if (!e.category) e.category = 'focus'; });
                     state.plannerEvents = savedPlannerEvents;
                 }
-                const animationPlayed = localStorage.getItem('focusDashboard_animationPlayed');
-                if (animationPlayed) state.animationPlayedToday = JSON.parse(animationPlayed);
             }
 
             function saveState() {
@@ -1108,7 +1059,6 @@
                 localStorage.setItem('focusDashboard_routine', JSON.stringify(state.routine));
                 localStorage.setItem('focusDashboard_timeWorked', state.totalTimeWorked);
                 localStorage.setItem('focusDashboard_plannerEvents', JSON.stringify(state.plannerEvents));
-                localStorage.setItem('focusDashboard_animationPlayed', JSON.stringify(state.animationPlayedToday));
             }
 
             function renderAll() {
@@ -1488,12 +1438,7 @@
                     form.reset();
                 }
             }
-            function handleNewDay() {
-                localStorage.clear();
-                state.animationPlayedToday = false; // Reset animation flag
-                saveState();
-                location.reload();
-            }
+            function handleNewDay() { localStorage.clear(); location.reload(); }
             function startNextTask() {
                 const allTasks = [...state.todos.vormittag, ...state.todos.nachmittag];
                 const nextTodo = allTasks.find(t => !t.completed);
@@ -1530,7 +1475,6 @@
                 state.timer.isPaused = false;
                 if (state.timer.activeTaskItem) {
                     state.timer.activeTaskItem.classList.remove('timer-active');
-                    state.timer.activeTaskItem.querySelector('.task-timer-btn').innerHTML = ICONS.play;
                 }
                 const currentlyActive = document.querySelector('.todo-item.timer-active');
                 if (currentlyActive) {
@@ -1612,40 +1556,8 @@
                 if (m > 0) result += `${m}m`;
                 return result.trim();
             }
-
-            function triggerSuccessAnimation() {
-                if (state.animationPlayedToday) return;
-
-                const successModal = modals.success;
-                const confettiContainer = successModal.querySelector('.confetti-container');
-                confettiContainer.innerHTML = ''; // Clear old confetti
-
-                for (let i = 0; i < 150; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.left = `${Math.random() * 100}%`;
-                    confetti.style.animationDelay = `${Math.random() * 4}s`;
-                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 60%)`;
-                    confettiContainer.appendChild(confetti);
-                }
-                
-                toggleModal(successModal, true);
-                state.animationPlayedToday = true;
-                saveState();
-
-                setTimeout(() => {
-                    toggleModal(successModal, false);
-                }, 5000);
-            }
-
             function updateDailyProgress() {
                 const allTasks = [...state.todos.vormittag, ...state.todos.nachmittag];
-                if(allTasks.length === 0) {
-                    dailyProgressBar.style.width = '0%';
-                    headerProgressBar.style.width = '0%';
-                    progressTimeDisplay.textContent = `0m / 0m`;
-                    return;
-                }
                 const totalTimeOfAllTasks = allTasks.reduce((sum, t) => sum + t.time, 0);
                 const workedTime = state.totalTimeWorked;
                 const workedTimeFormatted = formatMinutesToHours(workedTime);
@@ -1654,11 +1566,6 @@
                 const percentage = totalTimeOfAllTasks > 0 ? (workedTime / totalTimeOfAllTasks) * 100 : 0;
                 dailyProgressBar.style.width = `${Math.min(percentage, 100)}%`;
                 headerProgressBar.style.width = `${Math.min(percentage, 100)}%`;
-
-                const allTasksCompleted = allTasks.every(task => task.completed);
-                if (allTasksCompleted && percentage >= 100) {
-                    triggerSuccessAnimation();
-                }
             }
             function renderPlannerTimeline() {
                 plannerTimeline.innerHTML = '';
@@ -1864,3 +1771,4 @@
     </script>
 </body>
 </html>
+
