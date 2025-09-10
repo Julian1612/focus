@@ -466,6 +466,17 @@
             padding: 0.5rem 0;
             border-bottom: 1px solid var(--border-color);
         }
+        
+        #routine-list li.indented {
+            padding-left: 20px;
+        }
+
+        .routine-heading {
+            display: block;
+            padding: 0.5rem 0 0.25rem 0;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
 
         #routine-list h3 {
             margin-top: 1.5rem;
@@ -671,7 +682,7 @@
         .planner-grid {
             flex-grow: 1;
             position: relative;
-            background-image: repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 30px), repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 60px);
+            background-image: repeating-linear-gradient(rgba(58, 58, 60, 0.5) 0 1px, transparent 1px 15px), repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 60px);
             min-height: 840px; 
         }
 
@@ -920,26 +931,27 @@
                     {
                         title: 'Morgen-Routine: Klarheit & Fokus',
                         items: [
-                            { id: 'mr1', text: 'Tages-Check: Kalender, E-Mails und To-Do\'s', completed: false },
-                            { id: 'mr2', text: 'Anknüpfen: Erkenntnisse/Notizen von gestern prüfen', completed: false },
-                            { id: 'mr3', text: 'Zeitblöcke planen: Hinter jede Aufgabe die realistisch geschätzte Zeit eintragen', completed: false },
-                            { id: 'mr4', text: 'Eat the Frog: Starte direkt mit der wichtigsten oder unangenehmsten Aufgabe', completed: false }
+                           { id: 'mr1', text: 'Tages-Check:', type: 'heading' },
+                           { id: 'mr2', text: 'Kalender', completed: false, indent: true },
+                           { id: 'mr3', text: 'E-Mails', completed: false, indent: true },
+                           { id: 'mr4', text: 'To-Do\'s', completed: false, indent: true },
+                           { id: 'mr5', text: 'Anknüpfen: Erkenntnisse/Notizen von gestern prüfen.', completed: false },
+                           { id: 'mr6', text: 'Eat the Frog.', completed: false }
                         ]
                     },
                     {
                         title: 'Arbeitsblöcke: Maximale Effizienz',
                         items: [
                             { id: 'ab1', text: 'Fokus-Soundtrack nutzen', completed: false },
-                            { id: 'ab2', text: 'Singletasking: Immer nur an EINER Aufgabe arbeiten', completed: false },
-                            { id: 'ab3', text: 'Bewusste Mikro-Pausen: Nach jedem Sprint 5 Minuten aufstehen', completed: false },
-                            { id: 'ab4', text: 'Hydriert bleiben', completed: false }
+                            { id: 'ab2', text: 'Hydriert bleiben', completed: false },
+                            { id: 'ab3', text: 'Bewusste Mikro-Pausen: Nach jedem Sprint 5 Minuten aufstehen, strecken, Wasser trinken.', completed: false }
                         ]
                     },
                     {
                         title: 'Feierabend-Routine: Abschalten & Vorbereiten',
                         items: [
                             { id: 'fr1', text: 'Brain-Dump für Morgen: Alle offenen Punkte und Ideen festhalten', completed: false },
-                            { id: 'fr2', text: 'Clear-Desk: Arbeitsplatz aufräumen für einen klaren Start', completed: false }
+                            { id: 'fr2', text: 'Clear-Desk: Arbeitsplatz aufräumen/Tasche packen.', completed: false }
                         ]
                     }
                 ],
@@ -1042,7 +1054,11 @@
                     state.todos = savedTodosData;
                 }
                 const savedRoutine = JSON.parse(localStorage.getItem('focusDashboard_routine'));
-                if (savedRoutine && Array.isArray(savedRoutine) && savedRoutine[0]?.title) {
+                 if (!savedRoutine || !savedRoutine[0] || !savedRoutine[0].items[0].indent) {
+                    // Old structure detected or no routine, load new default
+                    // The default is already in the state object, so we just save it
+                    saveState();
+                } else {
                     state.routine = savedRoutine;
                 }
                 const savedTime = localStorage.getItem('focusDashboard_timeWorked');
@@ -1130,9 +1146,19 @@
                     h3.textContent = section.title;
                     routineListElement.appendChild(h3);
                     section.items.forEach(item => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
-                        routineListElement.appendChild(li);
+                        if (item.type === 'heading') {
+                            const headingSpan = document.createElement('span');
+                            headingSpan.className = 'routine-heading';
+                            headingSpan.textContent = item.text;
+                            routineListElement.appendChild(headingSpan);
+                        } else {
+                            const li = document.createElement('li');
+                            if (item.indent) {
+                                li.classList.add('indented');
+                            }
+                            li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
+                            routineListElement.appendChild(li);
+                        }
                     });
                 });
             }
@@ -1475,6 +1501,7 @@
                 state.timer.isPaused = false;
                 if (state.timer.activeTaskItem) {
                     state.timer.activeTaskItem.classList.remove('timer-active');
+                    state.timer.activeTaskItem.querySelector('.task-timer-btn').innerHTML = ICONS.play;
                 }
                 const currentlyActive = document.querySelector('.todo-item.timer-active');
                 if (currentlyActive) {
@@ -1532,7 +1559,6 @@
                 state.timer.secondsLeft = 1500;
                 updateTimerUI();
                 modalButtons.focusSession.classList.remove('active');
-                document.querySelectorAll('.task-timer-btn').forEach(btn => btn.innerHTML = ICONS.play);
                 document.title = 'Fokus Dashboard';
                 updateFocusSessionView();
                 updateGlobalControlsView();
@@ -1612,7 +1638,7 @@
                     plannerAction.type = 'create';
                     const newEventEl = document.createElement('div');
                     newEventEl.className = 'planner-event temp'; // Add temp class
-                    const startTop = e.offsetY - (e.offsetY % 15);
+                    const startTop = e.offsetY - (e.offsetY % 5);
                     newEventEl.style.top = `${startTop}px`;
                     newEventEl.style.height = '30px';
                     plannerGrid.appendChild(newEventEl);
@@ -1625,7 +1651,7 @@
             function onPlannerMouseMove(e) {
                 if (!plannerAction.active) return;
                 const dy = e.clientY - plannerAction.initialY;
-                const snap = 15;
+                const snap = 5;
                 if (plannerAction.type === 'move') {
                     let newTop = plannerAction.initialTop + dy;
                     newTop = Math.max(0, Math.round(newTop / snap) * snap);
