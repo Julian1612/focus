@@ -27,15 +27,13 @@ export async function initAppLoader(sidebarEl, dashboardAPI) {
 }
 
 async function fetchManifest(appDir) {
-    // CHANGE HERE: Use a root-relative path for fetching the manifest.
-    const response = await fetch(`/apps/${appDir}/app.json`);
+    // This path is relative to index.html and works correctly for fetch.
+    const response = await fetch(`apps/${appDir}/app.json`);
     if (!response.ok) {
         throw new Error(`Could not fetch manifest for ${appDir}`);
     }
-    const manifest = await response.json();
-    // CHANGE HERE: The base path is now root-relative.
-    manifest.basePath = `/apps/${appDir}/`;
-    return manifest;
+    // We don't need to store a basePath anymore as we'll construct paths contextually.
+    return await response.json();
 }
 
 function registerApp(manifest, sidebarEl, dashboardAPI) {
@@ -82,13 +80,18 @@ async function loadApp(manifest, modal, dashboardAPI) {
 
     const contentContainer = modal.querySelector('.app-content-container');
     try {
-        // This fetch will now correctly use the root-relative path.
-        const htmlResponse = await fetch(manifest.basePath + manifest.entrypoints.html);
+        // GEÄNDERT: Construct separate paths for fetch and import.
+
+        // Path for fetch(), relative to index.html
+        const htmlPath = `apps/${manifest.id}/${manifest.entrypoints.html}`;
+
+        // Path for import(), relative to this file (appLoader.js)
+        const jsPath = `../../apps/${manifest.id}/${manifest.entrypoints.js}`;
+
+        const htmlResponse = await fetch(htmlPath);
         if (!htmlResponse.ok) throw new Error('Failed to load HTML.');
         contentContainer.innerHTML = await htmlResponse.text();
         
-        // This dynamic import will now correctly use the root-relative path.
-        const jsPath = manifest.basePath + manifest.entrypoints.js;
         const appModule = await import(jsPath);
         
         if (appModule && typeof appModule.init === 'function') {
@@ -105,4 +108,3 @@ async function loadApp(manifest, modal, dashboardAPI) {
 function toggleModal(modal, show) {
     modal.classList.toggle('visible', show);
 }
-
