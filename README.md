@@ -1,3 +1,5 @@
+https://julian1612.github.io/focus/
+
 # 📖 FocusOS Dokumentation
 
 Herzlich willkommen zur offiziellen Dokumentation von FocusOS, deinem modularen Dashboard für maximale Produktivität! 🚀
