@@ -1,0 +1,272 @@
+# 📖 FocusOS Dokumentation
+
+Herzlich willkommen zur offiziellen Dokumentation von FocusOS, deinem modularen Dashboard für maximale Produktivität! 🚀
+
+Dieses Dokument ist dein zentraler Anlaufpunkt – egal, ob du die App einfach nur nutzen oder selbst kreativ werden und eigene Apps entwickeln möchtest.
+
+---
+
+## 1. Übersicht & Philosophie 🎯
+
+FocusOS ist eine Single-Page-Anwendung, die dir hilft, Klarheit in deinen Tag zu bringen, Aufgaben zu meistern und deine Konzentration durch gezielte Arbeitseinheiten zu bündeln.
+
+Die Kernphilosophie von FocusOS ist eine **stabile und flexible, plugin-basierte Architektur**:
+
+> **🧠 Der FocusOS Kern:** Das Herzstück der Anwendung. Er umfasst die unverzichtbaren, täglich genutzten Funktionen: den Tagesplaner, die To-Do-Liste und die Fokussitzung (Timer). Der Kern ist darauf ausgelegt, absolut stabil und performant zu sein.
+
+> **🧩 Das App-Ökosystem:** Alle Zusatzfunktionen sind als eigenständige "Apps" gekapselt. Diese werden dynamisch in das System geladen und kommunizieren mit dem Kern über eine sichere Schnittstelle (`dashboardAPI`). Das macht FocusOS unendlich erweiterbar, ohne die Stabilität des Kerns zu gefährden.
+
+---
+
+## 2. Die Hauptfunktionen (FocusOS Kern)
+
+Der Kern bietet dir drei perfekt aufeinander abgestimmte Werkzeuge für deinen Tag.
+
+### 2.1. Der Tagesplaner 🗓️
+
+Der Tagesplaner ist deine visuelle Kommandozentrale von 07:00 bis 21:00 Uhr. Hier organisierst du deinen Tag in übersichtlichen Zeitblöcken.
+
+* **Ereignisse erstellen:** **Klicke und ziehe** einfach mit der Maus in einem freien Bereich der Zeitleiste. Sobald du loslässt, kannst du deinem neuen Block einen Namen und eine Kategorie geben.
+* **Drag & Drop:** Ein Plan hat sich geändert? Kein Problem! **Verschiebe** bestehende Blöcke einfach an eine neue Uhrzeit.
+* **Größe anpassen:** Eine Aufgabe dauert länger? **Ziehe** den unteren Rand eines Ereignisses, um die Dauer anzupassen. Die Zeit rastet dabei immer im 15-Minuten-Takt ein.
+* **Löschen:** Fahre mit der Maus über ein Ereignis und klicke auf das `×`, um es zu entfernen.
+* **Magische Synchronisation:** **Jeder Block im Planer ist direkt mit einer Aufgabe in der To-Do-Liste verknüpft.** Erstellst, änderst oder löschst du hier etwas, passiert es automatisch auch dort – und umgekehrt!
+
+### 2.2. Die To-Do-Liste ✅
+
+Hier werden aus Plänen konkrete, abhakbare Aufgaben.
+
+* **Aufgaben hinzufügen:** Gib einen Namen und eine geschätzte Dauer in Minuten ein, wähle eine Kategorie und klicke auf `+`. Deine Aufgabe erscheint sofort in der Liste und bekommt automatisch den nächsten freien Platz im Tagesplaner.
+* **Aufgaben bearbeiten:** **Doppelklicke** auf den Text einer Aufgabe, um ihn schnell und einfach zu ändern.
+* **Mehr Details:** Füge **Unteraufgaben** oder **Notizen** hinzu, indem du mit der Maus über eine Aufgabe fährst und die entsprechenden Symbole anklickst.
+* **Aufgaben abschließen:** Der beste Klick des Tages! Hake die Checkbox ab, um eine Aufgabe als erledigt zu markieren und deinen Tagesfortschritt zu steigern.
+* **Direkt loslegen:** Klicke auf das ►-Symbol bei einer Aufgabe, um sofort eine Fokussitzung dafür zu starten.
+
+### 2.3. Die Fokussitzung ⏱️
+
+Dies ist dein Werkzeug, um konzentriert zu arbeiten und deine Pläne in die Tat umzusetzen.
+
+* **Nächste Aufgabe starten:** Klicke auf "Nächste Aufgabe starten", um automatisch einen Timer für die oberste, unerledigte Aufgabe zu beginnen.
+* **Manueller Start:** Wähle gezielt eine Aufgabe aus deiner To-Do-Liste und starte den Timer über das ►-Symbol.
+* **Globaler Timer:** Während eine Sitzung läuft, siehst du oben rechts eine kleine Anzeige des Timers. So hast du die Zeit immer im Blick, egal was du gerade tust.
+* **Volle Kontrolle:** Pausiere oder brich einen laufenden Timer jederzeit ab.
+* **Tagesfortschritt:** Der Fortschrittsbalken zeigt dir auf einen Blick, wie viel Prozent deiner geplanten Arbeitszeit du heute schon geschafft hast. Ein super Motivator!
+
+---
+
+## 3. Das App-Ökosystem 🚀
+
+Apps sind das, was FocusOS wirklich besonders macht. Sie erweitern die Funktionalität, ohne den Kern zu belasten.
+
+**Aktuell installierte Apps:**
+
+* **🎶 Fokus FM:** Ein eingebetteter YouTube-Stream mit entspannter Lo-Fi-Musik für maximale Konzentration.
+* **📋 Meine Routine:** Eine einfache Checkliste für deine Morgen-, Arbeits- und Feierabendroutinen.
+* **📝 Notizen:** Ein digitales Notizbuch, das deine Gedanken automatisch speichert.
+* **🎯 Today's Focus:** Zeigt dir deine nächste anstehende Aufgabe und lässt dich mit einem Klick eine Fokussitzung starten.
+
+---
+
+## 4. Entwickler-Zentrale: Baue deine eigene App 👨‍💻
+
+Du hast eine Idee für eine Funktion? Großartig! Das App-System von FocusOS ist darauf ausgelegt, dir das Entwickeln so einfach wie möglich zu machen.
+
+### 4.1. Quickstart: Deine erste App in 6 Schritten
+
+Dies ist der schnellste Weg, um eine App zum Laufen zu bringen.
+
+1.  **Ordnerstruktur anlegen:** Erstelle einen neuen Ordner im `/apps/`-Verzeichnis. Der Name sollte kurz, aussagekräftig und kleingeschrieben sein (z.B. `mein-rechner`).
+
+    ```plaintext
+    /apps/
+    └── /mein-rechner/
+    ```
+
+2.  **Das Manifest (`app.json`) erstellen:** Jede App braucht eine `app.json`. Sie ist wie der "Personalausweis" deiner App.
+
+    **`/apps/mein-rechner/app.json`:**
+    ```json
+    {
+      "id": "mein-rechner",
+      "name": "Mein Rechner",
+      "icon": "<svg>...</svg>",
+      "entrypoints": {
+        "html": "index.html",
+        "js": "main.js"
+      }
+    }
+    ```
+
+3.  **Die Benutzeroberfläche (`index.html`) erstellen:** Erstelle das HTML für deine App. Es ist ein einfaches HTML-Fragment, das in das Modal-Fenster geladen wird.
+
+    **`/apps/mein-rechner/index.html`:**
+    ```html
+    <style>
+      /* Dein App-spezifisches CSS hier */
+    </style>
+    <h2>Mein super Rechner</h2>
+    <div id="rechner-ui">
+      </div>
+    ```
+
+4.  **Die App-Logik (`main.js`) schreiben:** Die `main.js` ist das Gehirn deiner App. Sie muss eine `export function init()` enthalten.
+
+    **`/apps/mein-rechner/main.js`:**
+    ```javascript
+    /**
+     * Haupt-Skript für die Rechner-App.
+     */
+    export function init(api, appRootElement) {
+        console.log("Rechner-App wurde geladen!");
+
+        // api: Deine Verbindung zum FocusOS-Kern.
+        // appRootElement: Das DOM-Element, in dem dein HTML liegt.
+    }
+    ```
+
+5.  **Die App registrieren:** Damit der App-Loader deine neue App finden kann, füge den Namen deines App-Ordners zur Liste in `js/services/appLoader.js` hinzu.
+
+    **`/js/services/appLoader.js`:**
+    ```javascript
+    // ...
+    const APP_DIRECTORIES = ['focus-fm', 'routine', 'notes', 'todays-focus', 'mein-rechner']; // <-- Hier hinzufügen
+    // ...
+    ```
+6. **Seite neu laden & fertig!** Deine App erscheint nun in der Seitenleiste.
+
+### 4.2. Die `dashboardAPI` im Detail: Deine Brücke zum Kern 🌉
+
+Die `dashboardAPI` ist das Herzstück der App-Entwicklung. Sie ist als Objekt `api` in deiner `init()`-Funktion verfügbar und stellt sicher, dass du nur auf kontrollierte und sichere Weise mit dem Kern interagieren kannst.
+
+#### Daten aus dem Kernsystem lesen
+
+Diese Funktionen geben dir eine **Kopie** der Daten. Du kannst den Kernzustand nicht versehentlich ändern.
+
+| Funktion              | Rückgabewert      | Beschreibung                                                                                              |
+|-----------------------|-------------------|-----------------------------------------------------------------------------------------------------------|
+| `getActiveTodos()`    | `Array<object>`   | Holt eine Liste aller unerledigten To-Do-Aufgaben. Jedes Objekt enthält Felder wie `id`, `text` und `time`. |
+| `getRoutine()`        | `Array<object>`   | Holt die aktuelle Routine-Checkliste mit allen Abschnitten und Einträgen.                                 |
+| `getPlannerEvents()`  | `Array<object>`   | Gibt eine Liste aller Ereignisse aus dem Tagesplaner zurück.                                              |
+
+**Beispiel: Die nächste Aufgabe anzeigen**
+```javascript
+export function init(api, appRootElement) {
+    const todos = api.getActiveTodos();
+    if (todos.length > 0) {
+        appRootElement.innerHTML = `<h3>Nächste Aufgabe:</h3><p>${todos[0].text}</p>`;
+    } else {
+        appRootElement.innerHTML = `<p>Super! Alles erledigt!</p>`;
+    }
+}
+Aktionen im Kernsystem auslösen
+Mit diesen Funktionen kannst du den Kern anweisen, Aktionen für dich auszuführen.
+
+Funktion	Parameter	Beschreibung
+updateRoutineItem()	itemId (string), completed (boolean)	Hakt einen Punkt auf der Routine-Liste ab (oder macht es rückgängig).
+startTimerForTask()	taskId (string)	Startet den globalen Fokustimer für eine bestimmte taskId aus der To-Do-Liste.
+
+In Google Sheets exportieren
+Beispiel: Einen Timer für die erste Aufgabe starten
+
+JavaScript
+
+export function init(api, appRootElement) {
+    const todos = api.getActiveTodos();
+    if (todos.length > 0) {
+        const firstTaskId = todos[0].id;
+        api.startTimerForTask(firstTaskId);
+    }
+}
+App-spezifische Daten speichern & laden
+Jede App hat ihren eigenen, privaten Speicherplatz. Deine Daten sind sicher vor anderen Apps.
+
+Funktion	Parameter	Beschreibung
+saveData()	appId (string), key (string), value (any)	Speichert Daten speziell für deine App (z.B. api.saveData('mein-rechner', 'letzteZahl', 42)).
+loadData()	appId (string), key (string)	any
+
+In Google Sheets exportieren
+Beispiel: Einen Zähler speichern
+
+JavaScript
+
+export function init(api, appRootElement) {
+    const APP_ID = 'mein-zaehler';
+    let count = api.loadData(APP_ID, 'count') || 0;
+
+    appRootElement.innerHTML = `<button id="counter-btn">Klicks: ${count}</button>`;
+    
+    const button = appRootElement.querySelector('#counter-btn');
+    button.addEventListener('click', () => {
+        count++;
+        button.textContent = `Klicks: ${count}`;
+        api.saveData(APP_ID, 'count', count);
+    });
+}
+4.3. Inter-App-Kommunikation: Events senden & empfangen 📡
+Manchmal muss eine App wissen, was eine andere App tut. Anstatt direkten Zugriff zu gewähren (was unsicher wäre), verwendet FocusOS ein Event-System. Apps können Nachrichten ("Events") in das System senden, und andere Apps können diese Nachrichten abonnieren.
+
+Funktion	Parameter	Beschreibung
+publishEvent()	eventName (string), payload (object)	Sendet ein Event-Signal an alle anderen Apps. payload sind die Daten, die du mitschickst.
+subscribeToEvent()	eventName (string), callback (function)	Registriert eine callback-Funktion, die immer dann aufgerufen wird, wenn das eventName-Signal gesendet wird.
+
+In Google Sheets exportieren
+Beispiel: Eine Statistik-App, die auf Notizen reagiert
+
+Stell dir vor, unsere Notizen-App sendet jedes Mal ein Signal, wenn eine neue Notiz gespeichert wird.
+
+/apps/notes/main.js (Ausschnitt):
+
+JavaScript
+
+// ... in der Funktion, die Notizen speichert ...
+const noteContent = textarea.value;
+api.saveData('notes', 'content', noteContent);
+
+// Event senden!
+api.publishEvent('notes:saved', { charCount: noteContent.length });
+Jetzt kann eine neue Statistik-App dieses Signal abonnieren und darauf reagieren.
+
+/apps/stats/main.js:
+
+JavaScript
+
+export function init(api, appRootElement) {
+    let totalChars = 0;
+    appRootElement.innerHTML = `<h3>Zeichen in Notizen: <span id="char-count">...</span></h3>`;
+    const countSpan = appRootElement.querySelector('#char-count');
+
+    // Wir lauschen auf das Signal der Notizen-App
+    api.subscribeToEvent('notes:saved', (data) => {
+        console.log("Neues Signal von der Notizen-App empfangen!", data);
+        totalChars = data.charCount;
+        countSpan.textContent = totalChars;
+    });
+}
+Dieses System ermöglicht es, komplexe Apps zu bauen, die zusammenarbeiten, ohne die Stabilität oder Sicherheit des Systems zu gefährden.
+
+5. Abschließende Dateistruktur 📁
+Plaintext
+
+/focus-dashboard/
+├── index.html
+├── style.css
+├── README.md
+├── js/
+│   ├── main.js
+│   ├── /core/
+│   │   ├── planner.js
+│   │   ├── todo.js
+│   │   ├── timer.js
+│   │   └── ui.js
+│   └── /services/
+│       ├── appLoader.js
+│       ├── dashboardAPI.js
+│       └── stateManager.js
+└── apps/
+    ├── /focus-fm/
+    │   ├── app.json
+    │   └── ...
+    ├── /routine/
+    │   ├── app.json
+    │   └── ...
+    └── ...
