@@ -1,37 +1,41 @@
-// File: js/main.js
-import { initModalToggles } from './modules/modals.js';
-import { initPlanner, renderPlannerEvents } from './modules/planner.js';
-import { initTodo, renderAllTodos, renderCategorySelectors } from './modules/todo.js';
-import { initTimer, updateDailyProgress } from './modules/timer.js';
-import { initRoutineModal } from './modules/routine.js';
-import { $, loadState } from './utils.js';
+import { state, loadState, saveState, resetState } from './services/stateManager.js';
+import { dashboardAPI } from './services/dashboardAPI.js';
+import { initAppLoader } from './services/appLoader.js';
+import { initUI, updateDailyProgress } from './core/ui.js';
+import { initTodo, renderAllTodos } from './core/todo.js';
+import { initPlanner, renderPlannerEvents } from './core/planner.js';
+import * as timer from './core/timer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    
-    function setGreeting() {
-        const greetingElement = $('#greeting');
-        const hour = new Date().getHours();
-        if (hour < 12) greetingElement.textContent = 'Guten Morgen';
-        else if (hour < 18) greetingElement.textContent = 'Guten Tag';
-        else greetingElement.textContent = 'Guten Abend';
-    }
-    
-    // This is a special listener to bridge the modules
-    document.getElementById('add-todo-category-container').addEventListener('render', renderCategorySelectors);
-
-    // Initial Setup
-    setGreeting();
+    // 1. Load state from localStorage
     loadState();
+
+    // 2. Initialize the secure API for apps
+    dashboardAPI.init(state, saveState, timer);
+
+    // 3. Define a central render function
+    const render = () => {
+        renderAllTodos();
+        renderPlannerEvents();
+        updateDailyProgress();
+    };
+
+    // 4. Initialize Core Modules with dependencies
+    const dom = {
+        sidebar: document.getElementById('app-sidebar'),
+        // Add other common DOM elements if needed
+    };
+
+    initUI(state, resetState);
+    initTodo(state, saveState, render);
+    initPlanner(state, saveState, render);
+    timer.initTimer(state, saveState, render);
     
-    // Initialize all modules
-    initModalToggles();
-    initPlanner();
-    initTodo();
-    initTimer();
-    initRoutineModal();
+    // 5. Initialize the App Loader
+    initAppLoader(dom.sidebar, dashboardAPI);
     
-    // Initial Render
-    renderAllTodos();
-    renderPlannerEvents();
-    updateDailyProgress();
+    // 6. Initial Render of the application
+    render();
+    
+    console.log("FocusOS initialized successfully.");
 });
