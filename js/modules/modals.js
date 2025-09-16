@@ -1,23 +1,28 @@
-/**
- * js/modules/modals.js
- * * Verwaltet das Öffnen und Schließen aller Modals.
- */
+// File: js/modules/modals.js
+import { $ } from '../utils.js';
 
-// DOM-Elemente, die in main.js abgefragt und hierher übergeben werden
-let elements = {};
+const modals = {
+    focusFm: $('#modal-focus-fm'),
+    routine: $('#modal-routine'),
+    focusSession: $('#modal-focus-session')
+};
+
+const modalButtons = {
+    focusFm: $('#focus-fm-btn'),
+    routine: $('#routine-btn'),
+    focusSession: $('#focus-session-btn')
+};
 
 function toggleModal(modal, show) {
     modal.classList.toggle('visible', show);
 }
 
-export function initModals(modalElements) {
-    elements = modalElements;
-
-    Object.keys(elements.modalButtons).forEach(key => {
-        elements.modalButtons[key].addEventListener('click', () => toggleModal(elements.modals[key], true));
+export function initModalToggles() {
+    Object.keys(modalButtons).forEach(key => {
+        modalButtons[key].addEventListener('click', () => toggleModal(modals[key], true));
     });
 
-    Object.values(elements.modals).forEach(modal => {
+    Object.values(modals).forEach(modal => {
         modal.addEventListener('click', e => {
             if (e.target === modal || e.target.classList.contains('modal-close-btn')) {
                 toggleModal(modal, false);

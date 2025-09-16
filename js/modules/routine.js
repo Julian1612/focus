@@ -1,44 +1,29 @@
-/**
- * js/modules/routine.js
- * * Verwaltet die Anzeige und Interaktion mit der "Meine Routine"-Liste.
- */
+// File: js/modules/routine.js
+import { state } from '../state.js';
+import { $, saveState } from '../utils.js';
 
-let routineListElement;
-let appState;
+const routineListElement = $('#routine-list');
 
-export function initRoutine(element, state) {
-    routineListElement = element;
-    appState = state;
-}
-
-export function renderRoutineList() {
-    if (!routineListElement) return;
+function renderRoutineList() {
     routineListElement.innerHTML = '';
-    appState.routine.forEach(section => {
+    state.routine.forEach(section => {
         const h3 = document.createElement('h3');
         h3.textContent = section.title;
         routineListElement.appendChild(h3);
         section.items.forEach(item => {
-            if (item.type === 'heading') {
-                const headingSpan = document.createElement('span');
-                headingSpan.className = 'routine-heading';
-                headingSpan.textContent = item.text;
-                routineListElement.appendChild(headingSpan);
-            } else {
-                const li = document.createElement('li');
-                if (item.indent) {
-                    li.classList.add('indented');
-                }
-                li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
-                routineListElement.appendChild(li);
-            }
+            const li = document.createElement('li');
+            li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
+            routineListElement.appendChild(li);
         });
     });
 }
 
-export function handleRoutineCheckboxChange(target) {
+function handleRoutineCheckboxChange(e) {
+    const target = e.target;
+    if (target.type !== 'checkbox' || !target.closest('#routine-list li')) return;
+
     let foundItem = null;
-    for (const section of appState.routine) {
+    for (const section of state.routine) {
         const item = section.items.find(i => i.id === target.id);
         if (item) {
             foundItem = item;
@@ -47,7 +32,11 @@ export function handleRoutineCheckboxChange(target) {
     }
     if (foundItem) {
         foundItem.completed = target.checked;
-        return true; // Signalisiert, dass eine Zustandsänderung stattgefunden hat
+        saveState();
     }
-    return false;
+}
+
+export function initRoutineModal() {
+    renderRoutineList();
+    routineListElement.addEventListener('change', handleRoutineCheckboxChange);
 }
