@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fokus Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* CSS Reset und Grund-Setup */
+:root {
+--bg-color: #1c1c1e;
+--card-color: #2c2c2e;
+--text-primary: #f2f2f7;
+--text-secondary: #8d8d92;
+--accent-color: #af52de;
+--border-color: #3a3a3c;
+--success-color: #32d74b;
+
+/* Farb-Variablen für Kategorien */
+--cat-focus-bg: rgba(175, 82, 222, 0.2);
+--cat-focus-border: #af52de;
+--cat-meeting-bg: rgba(94, 92, 230, 0.2);
+--cat-meeting-border: #5e5ce6;
+--cat-privat-bg: rgba(50, 215, 75, 0.2);
+--cat-privat-border: #32d74b;
+--cat-pause-bg: rgba(255, 159, 10, 0.2);
+--cat-pause-border: #ff9f0a;
+--cat-orga-bg: rgba(100, 210, 255, 0.2);
+--cat-orga-border: #64d2ff;
+}
+
+*, *::before, *::after {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+}
+
+html, body {
+height: 100%;
+font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+background-color: var(--bg-color);
+color: var(--text-primary);
+font-size: 16px;
+line-height: 1.5;
+overflow: hidden;
+}
+
+body {
+display: flex;
+}
+
+/* Hauptlayout: Seitenleiste und Inhaltsbereich */
+.sidebar {
+width: 60px;
+height: 100vh;
+background-color: var(--card-color);
+border-right: 1px solid var(--border-color);
+display: flex;
+flex-direction: column;
+align-items: center;
+padding-top: 20px;
+position: fixed;
+top: 0;
+left: 0;
+z-index: 100;
+}
+
+.main-content {
+flex-grow: 1;
+margin-left: 60px;
+padding: 2rem;
+height: 100vh;
+position: relative;
+display: flex;
+flex-direction: column;
+}
+
+.sidebar-btn {
+background: none;
+border: none;
+color: var(--text-secondary);
+cursor: pointer;
+width: 44px;
+height: 44px;
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-bottom: 1rem;
+transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-btn:hover {
+background-color: rgba(255, 255, 255, 0.1);
+color: var(--text-primary);
+}
+
+.sidebar-btn.active {
+box-shadow: 0 0 0 2px var(--accent-color);
+color: var(--accent-color);
+}
+
+.sidebar-btn svg {
+width: 24px;
+height: 24px;
+}
+
+.dashboard-header {
+margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+font-size: 2rem;
+font-weight: 700;
+}
+
+.dashboard-header p {
+color: var(--text-secondary);
+}
+
+.header-progress-container {
+position: fixed;
+top: 2.1rem;
+left: 50%;
+transform: translateX(-50%);
+width: 100%;
+max-width: 400px;
+height: 8px;
+background-color: var(--card-color);
+border-radius: 4px;
+overflow: hidden;
+z-index: 150;
+}
+
+.todo-widgets {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+gap: 2rem;
+align-items: stretch;
+flex-grow: 1;
+min-height: 0;
+}
+
+.todo-card {
+background-color: var(--card-color);
+border-radius: 12px;
+padding: 1.5rem;
+display: flex;
+flex-direction: column;
+min-height: 0; 
+}
+
+.todo-card h2 {
+font-size: 1.25rem;
+margin-bottom: 1rem;
+}
+
+.add-todo-form {
+display: grid;
+grid-template-columns: 1fr auto;
+gap: 0.5rem;
+margin-bottom: 1.5rem;
+align-items: start;
+}
+
+.add-todo-form .inputs-wrapper {
+display: flex;
+gap: 0.5rem;
+}
+
+.add-todo-form input, .add-todo-form select {
+background-color: var(--bg-color);
+border: 1px solid var(--border-color);
+color: var(--text-primary);
+border-radius: 8px;
+padding: 0.5rem 0.75rem;
+font-family: inherit;
+font-size: 1rem;
+height: 38px;
+}
+
+.add-todo-form input[type="text"] {
+flex-grow: 1;
+}
+
+.add-todo-form input[type="number"] {
+width: 70px;
+}
+
+.add-todo-form button[type="submit"] {
+background-color: var(--accent-color);
+color: white;
+border: none;
+border-radius: 8px;
+padding: 0 1rem;
+cursor: pointer;
+font-weight: 500;
+transition: background-color 0.2s ease;
+height: 38px;
+}
+.add-todo-form button[type="submit"]:hover {
+background-color: #9647c5;
+}
+
+.todo-list-container {
+flex-grow: 1;
+overflow-y: auto;
+min-height: 0;
+}
+
+.todo-list {
+list-style: none;
+padding: 0;
+}
+
+.todo-item {
+padding: 0.5rem;
+border-bottom: 1px solid var(--border-color);
+transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.todo-item.timer-active {
+background-color: rgba(175, 82, 222, 0.1);
+border-radius: 8px;
+box-shadow: 0 0 8px rgba(175, 82, 222, 0.3);
+}
+
+.todo-item:last-child {
+border-bottom: none;
+}
+
+.todo-item-main {
+display: flex;
+align-items: center;
+gap: 0.75rem;
+position: relative;
+}
+
+.todo-item input[type="checkbox"] {
+accent-color: var(--accent-color);
+width: 18px;
+height: 18px;
+cursor: pointer;
+}
+
+.task-content {
+flex-grow: 1;
+cursor: text;
+}
+
+.todo-item.completed .task-content {
+text-decoration: line-through;
+color: var(--text-secondary);
+}
+
+.task-time {
+color: var(--text-secondary);
+font-size: 0.9rem;
+background-color: var(--bg-color);
+padding: 2px 8px;
+border-radius: 6px;
+}
+
+.task-actions {
+display: flex;
+align-items: center;
+opacity: 0;
+transition: opacity 0.2s ease;
+}
+
+.todo-item:hover .task-actions {
+opacity: 1;
+}
+
+.task-actions button {
+background: none;
+border: none;
+color: var(--text-secondary);
+cursor: pointer;
+padding: 4px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.task-actions button:hover {
+color: var(--text-primary);
+}
+.task-actions button.delete-btn:hover {
+color: #ff453a;
+}
+.task-actions button.task-timer-btn:hover {
+color: var(--accent-color);
+}
+.task-actions button svg {
+width: 18px;
+height: 18px;
+}
+
+.edit-task-input {
+background-color: var(--bg-color);
+border: 1px solid var(--accent-color);
+color: var(--text-primary);
+border-radius: 6px;
+padding: 0 4px; /* Adjusted padding */
+font-family: inherit;
+font-size: 1rem;
+flex-grow: 1; /* Takes up the space of the span */
+height: 24px; /* Matches line height */
+}
+
+.completed-divider {
+border: none;
+border-top: 1px solid var(--border-color);
+margin: 1rem 0;
+}
+
+.completed-list .todo-item {
+opacity: 0.7;
+}
+
+.notes-area {
+display: none;
+width: calc(100% - 26px);
+margin-left: auto;
+margin-top: 0.5rem;
+background-color: var(--bg-color);
+border: 1px solid var(--border-color);
+color: var(--text-primary);
+border-radius: 8px;
+padding: 0.5rem;
+font-family: inherit;
+resize: vertical;
+}
+
+.subtask-list {
+list-style: none;
+padding-left: 40px;
+margin-top: 0.5rem;
+}
+
+.subtask-item {
+display: flex;
+align-items: center;
+gap: 0.5rem;
+padding: 0.25rem 0;
+}
+.subtask-item.completed span {
+text-decoration: line-through;
+color: var(--text-secondary);
+}
+.subtask-item button {
+background: none; border: none; color: var(--text-secondary); cursor: pointer;
+margin-left: auto;
+}
+
+.add-subtask-form {
+display: none;
+gap: 0.5rem;
+margin-top: 0.75rem;
+width: calc(100% - 26px);
+margin-left: auto;
+}
+
+.add-subtask-form input {
+flex-grow: 1;
+background-color: var(--bg-color);
+border: 1px solid var(--border-color);
+color: var(--text-primary);
+border-radius: 8px;
+padding: 0.5rem 0.75rem;
+font-family: inherit;
+font-size: 0.9rem;
+}
+
+.add-subtask-form button {
+background-color: var(--accent-color);
+color: white;
+border: none;
+border-radius: 8px;
+padding: 0 0.75rem;
+cursor: pointer;
+font-weight: 500;
+transition: background-color 0.2s ease;
+}
+.add-subtask-form button:hover {
+background-color: #9647c5;
+}
+
+.modal-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.5);
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 200;
+opacity: 0;
+visibility: hidden;
+transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.visible {
+opacity: 1;
+visibility: visible;
+}
+
+.modal-content {
+background-color: var(--card-color);
+padding: 2rem;
+border-radius: 12px;
+width: 90%;
+max-width: 600px;
+position: relative;
+transform: scale(0.95);
+transition: transform 0.3s ease;
+}
+
+.modal-overlay.visible .modal-content {
+transform: scale(1);
+}
+
+.modal-content h2 {
+margin-bottom: 1.5rem;
+}
+
+.modal-close-btn {
+position: absolute;
+top: 1rem;
+right: 1rem;
+background: none;
+border: none;
+color: var(--text-secondary);
+font-size: 1.5rem;
+cursor: pointer;
+z-index: 11;
+}
+
+.video-container {
+position: relative;
+padding-bottom: 56.25%;
+height: 0;
+overflow: hidden;
+border-radius: 8px;
+}
+.video-container iframe {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+border: 0;
+}
+
+#routine-list {
+list-style: none;
+}
+#routine-list li {
+display: flex;
+align-items: center;
+gap: 0.75rem;
+padding: 0.5rem 0;
+border-bottom: 1px solid var(--border-color);
+}
+        
+        #routine-list li.indented {
+            padding-left: 20px;
+        }
+
+        .routine-heading {
+            display: block;
+            padding: 0.5rem 0 0.25rem 0;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+#routine-list h3 {
+margin-top: 1.5rem;
+margin-bottom: 0.5rem;
+color: var(--accent-color);
+font-size: 1.1rem;
+border-bottom: 1px solid var(--border-color);
+padding-bottom: 0.25rem;
+}
+#routine-list > *:first-child { 
+margin-top: 0;
+}
+
+
+#timer-display-container {
+margin-bottom: 1rem;
+}
+
+#timer-display {
+font-size: 4rem;
+font-weight: 700;
+text-align: center;
+font-variant-numeric: tabular-nums;
+}
+
+#start-next-task-btn {
+background-color: var(--accent-color);
+color: white;
+border: none;
+border-radius: 12px;
+padding: 1rem 1.5rem;
+font-size: 1.25rem;
+font-weight: 600;
+width: 100%;
+cursor: pointer;
+transition: background-color 0.2s ease;
+}
+
+#start-next-task-btn:hover {
+background-color: #9647c5;
+}
+
+.timer-controls {
+display: flex;
+justify-content: center;
+gap: 1rem;
+margin-bottom: 2rem;
+}
+
+.timer-controls button {
+background-color: var(--bg-color);
+border: 1px solid var(--border-color);
+color: var(--text-primary);
+padding: 0.5rem 1rem;
+border-radius: 8px;
+cursor: pointer;
+}
+
+.progress-section h3 {
+text-align: center;
+margin-bottom: 0.5rem;
+font-weight: 500;
+}
+.progress-bar-container {
+width: 100%;
+background-color: var(--bg-color);
+border-radius: 8px;
+overflow: hidden;
+}
+.progress-bar {
+height: 10px;
+width: 0%;
+background-color: var(--accent-color);
+transition: width 0.5s ease;
+}
+
+.progress-time-display {
+text-align: center;
+color: var(--text-secondary);
+margin-bottom: 0.75rem;
+font-size: 0.9rem;
+}
+
+#new-day-btn {
+display: block;
+width: 100%;
+padding: 0.75rem;
+background-color: #ff3b30;
+color: white;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+font-weight: 600;
+margin-top: 2rem;
+}
+
+#global-controls-container {
+position: fixed;
+top: 1.5rem;
+right: 2rem;
+z-index: 150;
+display: flex;
+align-items: center;
+justify-content: center;
+width: auto;
+height: auto;
+}
+
+#global-timer-display {
+font-size: 1rem;
+position: relative;
+z-index: 2;
+background-color: var(--card-color);
+color: var(--accent-color);
+padding: 0.5rem 1rem;
+border-radius: 8px;
+font-variant-numeric: tabular-nums;
+min-width: 70px;
+text-align: center;
+}
+
+#timer-progress-band {
+position: absolute;
+top: -2px; right: -2px; bottom: -2px; left: -2px;
+z-index: 1;
+border-radius: 10px;
+background: conic-gradient(var(--accent-color) 0deg, transparent 0deg);
+}
+
+#global-start-next-btn {
+font-size: 1rem;
+background-color: var(--card-color);
+color: var(--text-primary);
+border: 1px solid var(--border-color);
+border-radius: 8px;
+padding: 0.5rem 1rem;
+cursor: pointer;
+transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+#global-start-next-btn:hover {
+background-color: var(--accent-color);
+color: white;
+border-color: var(--accent-color);
+}
+
+.planner-container {
+display: flex;
+flex-grow: 1;
+min-height: 0;
+overflow-y: auto;
+background-color: var(--bg-color);
+border: 1px solid var(--border-color);
+border-radius: 8px;
+user-select: none;
+position: relative; /* Wichtig für den Indikator */
+}
+
+.planner-container::-webkit-scrollbar,
+.todo-list-container::-webkit-scrollbar {
+width: 8px;
+}
+
+.planner-container::-webkit-scrollbar-track,
+.todo-list-container::-webkit-scrollbar-track {
+background: transparent;
+}
+
+.planner-container::-webkit-scrollbar-thumb,
+.todo-list-container::-webkit-scrollbar-thumb {
+background-color: var(--border-color);
+border-radius: 4px;
+}
+
+.planner-container::-webkit-scrollbar-thumb:hover,
+.todo-list-container::-webkit-scrollbar-thumb:hover {
+background-color: var(--text-secondary);
+}
+
+
+.planner-timeline {
+width: 60px;
+padding-right: 10px;
+text-align: right;
+font-size: 0.8rem;
+color: var(--text-secondary);
+}
+
+.planner-timeline div {
+height: 60px;
+position: relative;
+}
+
+.planner-timeline div::after {
+content: '';
+position: absolute;
+bottom: 0;
+right: 0;
+width: 10px;
+border-bottom: 1px solid var(--border-color);
+}
+
+.planner-grid {
+flex-grow: 1;
+position: relative;
+            background-image: repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 30px), repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 60px);
+            background-image: repeating-linear-gradient(rgba(58, 58, 60, 0.5) 0 1px, transparent 1px 15px), repeating-linear-gradient(var(--border-color) 0 1px, transparent 1px 60px);
+min-height: 840px; 
+}
+
+#time-indicator {
+position: absolute;
+width: 100%;
+height: 2px;
+background-color: #ff3b30;
+left: 0;
+z-index: 5;
+pointer-events: none;
+box-shadow: 0 0 8px rgba(255, 59, 48, 0.7);
+display: none;
+}
+
+.planner-event {
+position: absolute;
+left: 5px;
+right: 5px;
+background-color: var(--cat-focus-bg);
+border: 1px solid var(--cat-focus-border);
+border-radius: 6px;
+padding: 5px;
+font-size: 0.9rem;
+overflow: hidden;
+cursor: move;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+transition: background-color 0.3s ease, border-color 0.3s ease;
+z-index: 2; /* Stellt sicher, dass Events über dem Grid sind */
+}
+
+.planner-event[data-category="focus"] { background-color: var(--cat-focus-bg); border-color: var(--cat-focus-border); }
+.planner-event[data-category="meeting"] { background-color: var(--cat-meeting-bg); border-color: var(--cat-meeting-border); }
+.planner-event[data-category="privat"] { background-color: var(--cat-privat-bg); border-color: var(--cat-privat-border); }
+.planner-event[data-category="pause"] { background-color: var(--cat-pause-bg); border-color: var(--cat-pause-border); }
+.planner-event[data-category="orga"] { background-color: var(--cat-orga-bg); border-color: var(--cat-orga-border); }
+
+
+.planner-event-text {
+pointer-events: none;
+}
+
+.planner-event-resize-handle {
+position: absolute;
+bottom: 0;
+left: 0;
+width: 100%;
+height: 8px;
+cursor: ns-resize;
+}
+
+.planner-delete-btn {
+position: absolute;
+top: 2px;
+right: 2px;
+background: none;
+border: none;
+color: var(--text-secondary);
+cursor: pointer;
+font-size: 1.2rem;
+line-height: 1;
+opacity: 0;
+transition: opacity 0.2s ease;
+}
+.planner-event:hover .planner-delete-btn {
+opacity: 1;
+}
+
+.input-modal-overlay {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.6);
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 10;
+border-radius: 12px;
+}
+
+.input-modal-content {
+background-color: var(--card-color);
+padding: 1.5rem;
+border-radius: 12px;
+border: 1px solid var(--border-color);
+width: 90%;
+max-width: 350px;
+display: flex;
+flex-direction: column;
+gap: 1rem;
+position: relative;
+}
+
+.input-modal-content h3 {
+margin: 0;
+text-align: center;
+}
+
+.input-modal-content input, .input-modal-content select {
+background-color: var(--bg-color);
+border: 1px solid var(--border-color);
+color: var(--text-primary);
+border-radius: 8px;
+padding: 0.75rem;
+font-size: 1rem;
+}
+
+.input-modal-content button {
+background-color: var(--accent-color);
+color: white;
+border: none;
+border-radius: 8px;
+padding: 0.75rem;
+font-size: 1rem;
+font-weight: 500;
+cursor: pointer;
+}
+
+.category-selector, .category-selector-inline {
+display: flex;
+flex-wrap: wrap;
+gap: 0.5rem;
+}
+
+.category-selector-inline {
+grid-column: 1 / -1;
+}
+
+.category-box {
+background-color: transparent;
+border: 2px solid var(--border-color);
+color: var(--text-secondary);
+border-radius: 8px;
+padding: 0.5rem 0.75rem;
+font-size: 0.9rem;
+cursor: pointer;
+transition: all 0.2s ease;
+}
+.category-box:hover {
+background-color: var(--border-color);
+color: var(--text-primary);
+}
+.category-box.active {
+color: var(--text-primary);
+font-weight: 500;
+}
+
+#planner-input-text:disabled,
+.add-todo-form input[type="text"]:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+background-color: var(--border-color);
+}
+
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+<button class="sidebar-btn" id="focus-fm-btn" title="Fokus FM"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" /></svg></button>
+<button class="sidebar-btn" id="routine-btn" title="Meine Routine"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h7.5M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg></button>
+<button class="sidebar-btn" id="focus-session-btn" title="Fokussitzung"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
+</nav>
+
+<main class="main-content">
+<div id="global-controls-container">
+<div id="timer-progress-band" style="display: none;"></div>
+<div id="global-timer-display" style="display: none;">00:00</div>
+<button id="global-start-next-btn" style="display: block;">▶ Nächste</button>
+</div>
+
+<div class="header-progress-container">
+<div class="progress-bar" id="header-progress-bar"></div>
+</div>
+
+<header class="dashboard-header">
+<div>
+<h1 id="greeting">Guten Tag</h1>
+<p>Planen Sie Ihren Tag und bleiben Sie fokussiert.</p>
+</div>
+</header>
+
+<div class="todo-widgets">
+<section class="todo-card">
+<h2>Tagesplaner</h2>
+<div class="planner-container">
+<div class="planner-timeline"></div>
+<div class="planner-grid">
+<div id="time-indicator"></div>
+</div>
+</div>
+<div class="input-modal-overlay" id="planner-input-modal" style="display: none;">
+<div class="input-modal-content">
+<button id="planner-input-cancel" class="modal-close-btn">&times;</button>
+<h3>Neues Ereignis</h3>
+<input type="text" id="planner-input-text" placeholder="Aufgabenname eingeben...">
+<div id="planner-input-category-container" class="category-selector"></div>
+<button id="planner-input-save">Speichern</button>
+</div>
+</div>
+</section>
+
+<section class="todo-card">
+<h2>To-Dos</h2>
+<div class="todo-list-container">
+<form class="add-todo-form">
+<div class="inputs-wrapper">
+<input type="text" placeholder="Neue Aufgabe..." required>
+<input type="number" placeholder="min" min="1" required>
+</div>
+<button type="submit">+</button>
+<div id="add-todo-category-container" class="category-selector-inline"></div>
+</form>
+<ul class="todo-list" id="list-all-todos" data-list-type="active"></ul>
+<hr class="completed-divider" id="divider-all-todos" style="display: none;">
+<ul class="todo-list completed-list" id="completed-list-all-todos" data-list-type="completed"></ul>
+</div>
+</section>
+</div>
+</main>
+
+<div class="modal-overlay" id="modal-focus-fm"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Fokus FM</h2><div class="video-container"><iframe src="https://www.youtube.com/embed/-z77ikRecGI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div></div>
+<div class="modal-overlay" id="modal-routine"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Meine Routine</h2><ul id="routine-list"></ul></div></div>
+<div class="modal-overlay" id="modal-focus-session"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2>Fokussitzung</h2><div id="timer-display-container"><div id="timer-display">25:00</div><button id="start-next-task-btn" style="display: none;">Nächste Aufgabe starten</button></div><div class="timer-controls"><button id="timer-control-btn">Pause</button><button id="timer-cancel-btn">Abbrechen</button></div><div class="progress-section"><h3>Tagesfortschritt</h3><div class="progress-time-display" id="progress-time">0m / 0m</div><div class="progress-bar-container"><div class="progress-bar" id="daily-progress-bar"></div></div></div><button id="new-day-btn">Neuer Tag</button></div></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+let activeSubtaskForm = null;
+let totalDurationForProgress = 0;
+
+const CATEGORIES = {
+focus: { name: 'Focus', color: '#af52de' },
+meeting: { name: 'Meeting', color: '#5e5ce6' },
+privat: { name: 'Privat', color: '#32d74b' },
+pause: { name: 'Pause', color: '#ff9f0a' },
+orga: { name: 'Organisation', color: '#64d2ff' }
+};
+
+let state = {
+todos: { vormittag: [], nachmittag: [] },
+routine: [
+{
+title: 'Morgen-Routine: Klarheit & Fokus',
+items: [
+                            { id: 'mr1', text: 'Tages-Check: Kalender, E-Mails und To-Do\'s', completed: false },
+                            { id: 'mr2', text: 'Anknüpfen: Erkenntnisse/Notizen von gestern prüfen', completed: false },
+                            { id: 'mr3', text: 'Zeitblöcke planen: Hinter jede Aufgabe die realistisch geschätzte Zeit eintragen', completed: false },
+                            { id: 'mr4', text: 'Eat the Frog: Starte direkt mit der wichtigsten oder unangenehmsten Aufgabe', completed: false }
+                           { id: 'mr1', text: 'Tages-Check:', type: 'heading' },
+                           { id: 'mr2', text: 'Kalender', completed: false, indent: true },
+                           { id: 'mr3', text: 'E-Mails', completed: false, indent: true },
+                           { id: 'mr4', text: 'To-Do\'s', completed: false, indent: true },
+                           { id: 'mr5', text: 'Anknüpfen: Erkenntnisse/Notizen von gestern prüfen.', completed: false },
+                           { id: 'mr6', text: 'Eat the Frog.', completed: false }
+]
+},
+{
+title: 'Arbeitsblöcke: Maximale Effizienz',
+items: [
+{ id: 'ab1', text: 'Fokus-Soundtrack nutzen', completed: false },
+                            { id: 'ab2', text: 'Singletasking: Immer nur an EINER Aufgabe arbeiten', completed: false },
+                            { id: 'ab3', text: 'Bewusste Mikro-Pausen: Nach jedem Sprint 5 Minuten aufstehen', completed: false },
+                            { id: 'ab4', text: 'Hydriert bleiben', completed: false }
+                            { id: 'ab2', text: 'Hydriert bleiben', completed: false },
+                            { id: 'ab3', text: 'Bewusste Mikro-Pausen: Nach jedem Sprint 5 Minuten aufstehen, strecken, Wasser trinken.', completed: false }
+]
+},
+{
+title: 'Feierabend-Routine: Abschalten & Vorbereiten',
+items: [
+{ id: 'fr1', text: 'Brain-Dump für Morgen: Alle offenen Punkte und Ideen festhalten', completed: false },
+                            { id: 'fr2', text: 'Clear-Desk: Arbeitsplatz aufräumen für einen klaren Start', completed: false }
+                            { id: 'fr2', text: 'Clear-Desk: Arbeitsplatz aufräumen/Tasche packen.', completed: false }
+]
+}
+],
+plannerEvents: [],
+totalTimeWorked: 0,
+timer: { interval: null, secondsLeft: 1500, isRunning: false, isPaused: false, activeTaskItem: null }
+};
+
+const lists = { allTodos: document.getElementById('list-all-todos'), completedAllTodos: document.getElementById('completed-list-all-todos') };
+const dividers = { allTodos: document.getElementById('divider-all-todos') };
+const form = document.querySelector('.add-todo-form');
+const modals = { focusFm: document.getElementById('modal-focus-fm'), routine: document.getElementById('modal-routine'), focusSession: document.getElementById('modal-focus-session') };
+const modalButtons = { focusFm: document.getElementById('focus-fm-btn'), routine: document.getElementById('routine-btn'), focusSession: document.getElementById('focus-session-btn') };
+const timerDisplay = document.getElementById('timer-display');
+const globalTimerDisplay = document.getElementById('global-timer-display');
+const timerControlButton = document.getElementById('timer-control-btn');
+const timerCancelButton = document.getElementById('timer-cancel-btn');
+const newDayButton = document.getElementById('new-day-btn');
+const dailyProgressBar = document.getElementById('daily-progress-bar');
+const routineListElement = document.getElementById('routine-list');
+const greetingElement = document.getElementById('greeting');
+const progressTimeDisplay = document.getElementById('progress-time');
+const startNextTaskBtn = document.getElementById('start-next-task-btn');
+const globalStartNextBtn = document.getElementById('global-start-next-btn');
+const headerProgressBar = document.getElementById('header-progress-bar');
+const plannerContainer = document.querySelector('.planner-container');
+const plannerTimeline = plannerContainer.querySelector('.planner-timeline');
+const plannerGrid = plannerContainer.querySelector('.planner-grid');
+const plannerInputModal = document.getElementById('planner-input-modal');
+const plannerInputText = document.getElementById('planner-input-text');
+const plannerInputSave = document.getElementById('planner-input-save');
+const plannerInputCancel = document.getElementById('planner-input-cancel');
+const timerProgressBand = document.getElementById('timer-progress-band');
+let audioCtx;
+let plannerAction = { active: false, type: null, target: null, initialY: 0, initialTop: 0, initialHeight: 0 };
+const PLANNER_START_HOUR = 7;
+const HOUR_HEIGHT = 60;
+const ICONS = {
+play: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>',
+pause: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-6-13.5v13.5" /></svg>'
+};
+
+function init() {
+renderCategorySelectors();
+setGreeting();
+loadState();
+renderAll();
+addEventListeners();
+updateDailyProgress();
+updateFocusSessionView();
+updateGlobalControlsView();
+renderPlannerTimeline();
+renderPlannerEvents();
+updateCurrentTimeIndicator();
+setInterval(updateCurrentTimeIndicator, 60000);
+}
+
+function renderCategorySelectors() {
+const containers = [
+document.getElementById('add-todo-category-container'),
+document.getElementById('planner-input-category-container')
+];
+containers.forEach((container, index) => {
+if (!container) return;
+container.innerHTML = '';
+let isFirst = true;
+for (const key in CATEGORIES) {
+const button = document.createElement('button');
+button.type = 'button';
+button.className = 'category-box';
+button.dataset.category = key;
+button.textContent = CATEGORIES[key].name;
+
+if (isFirst) {
+button.classList.add('active');
+const activeColor = CATEGORIES[key].color;
+button.style.borderColor = activeColor;
+button.style.backgroundColor = `rgba(${parseInt(activeColor.slice(1,3),16)},${parseInt(activeColor.slice(3,5),16)},${parseInt(activeColor.slice(5,7),16)},0.2)`;
+isFirst = false;
+} else {
+button.style.borderColor = 'var(--border-color)';
+}
+container.appendChild(button);
+}
+});
+}
+
+function setGreeting() {
+const hour = new Date().getHours();
+if (hour < 12) greetingElement.textContent = 'Guten Morgen';
+else if (hour < 18) greetingElement.textContent = 'Guten Tag';
+else greetingElement.textContent = 'Guten Abend';
+}
+
+function loadState() {
+const savedTodosData = JSON.parse(localStorage.getItem('focusDashboard_todos'));
+if (savedTodosData) {
+savedTodosData.vormittag.forEach(t => { if (!t.category) t.category = 'focus'; });
+savedTodosData.nachmittag.forEach(t => { if (!t.category) t.category = 'focus'; });
+state.todos = savedTodosData;
+}
+const savedRoutine = JSON.parse(localStorage.getItem('focusDashboard_routine'));
+                if (savedRoutine && Array.isArray(savedRoutine) && savedRoutine[0]?.title) {
+                 if (!savedRoutine || !savedRoutine[0] || !savedRoutine[0].items[0].indent) {
+                    // Old structure detected or no routine, load new default
+                    // The default is already in the state object, so we just save it
+                    saveState();
+                } else {
+state.routine = savedRoutine;
+}
+const savedTime = localStorage.getItem('focusDashboard_timeWorked');
+if (savedTime) state.totalTimeWorked = parseInt(savedTime, 10);
+const savedPlannerEvents = JSON.parse(localStorage.getItem('focusDashboard_plannerEvents'));
+if (savedPlannerEvents) {
+savedPlannerEvents.forEach(e => { if (!e.category) e.category = 'focus'; });
+state.plannerEvents = savedPlannerEvents;
+}
+}
+
+function saveState() {
+localStorage.setItem('focusDashboard_todos', JSON.stringify(state.todos));
+localStorage.setItem('focusDashboard_routine', JSON.stringify(state.routine));
+localStorage.setItem('focusDashboard_timeWorked', state.totalTimeWorked);
+localStorage.setItem('focusDashboard_plannerEvents', JSON.stringify(state.plannerEvents));
+}
+
+function renderAll() {
+renderAllTodos();
+renderRoutineList();
+}
+
+function renderAllTodos() {
+lists.allTodos.innerHTML = '';
+lists.completedAllTodos.innerHTML = '';
+const allTasks = [...state.todos.vormittag, ...state.todos.nachmittag];
+const startTimeMap = new Map();
+state.plannerEvents.forEach(event => {
+const startTime = event.startHour * 60 + (event.startMinutes || 0);
+startTimeMap.set(event.todoId, startTime);
+});
+allTasks.sort((a, b) => (startTimeMap.get(a.id) || Infinity) - (startTimeMap.get(b.id) || Infinity));
+const activeTasks = allTasks.filter(t => !t.completed);
+const completedTasks = allTasks.filter(t => t.completed);
+const findListName = (todoId) => {
+return state.todos.vormittag.some(t => t.id === todoId) ? 'vormittag' : 'nachmittag';
+};
+activeTasks.forEach(todo => lists.allTodos.appendChild(createTaskElement(todo, findListName(todo.id))));
+completedTasks.forEach(todo => lists.completedAllTodos.appendChild(createTaskElement(todo, findListName(todo.id))));
+dividers.allTodos.style.display = completedTasks.length > 0 ? 'block' : 'none';
+}
+
+function createTaskElement(todo, listName) {
+const li = document.createElement('li');
+li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+li.dataset.id = todo.id;
+li.dataset.list = listName;
+li.dataset.text = todo.text;
+li.innerHTML = `
+                   <div class="todo-item-main">
+                       <input type="checkbox" ${todo.completed ? 'checked' : ''}>
+                       <span class="task-content">${todo.text}</span>
+                       <div class="task-actions">
+                           <button class="add-subtask-btn" title="Unteraufgabe hinzufügen"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></button>
+                           <button class="toggle-notes-btn" title="Notizen anzeigen/verbergen"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg></button>
+                           <button class="delete-btn" title="Löschen"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                           <button class="task-timer-btn" title="Timer starten">${ICONS.play}</button>
+                       </div>
+                       <span class="task-time">${todo.time} min</span>
+                   </div>
+                   <textarea class="notes-area">${todo.notes || ''}</textarea>
+                   <ul class="subtask-list"></ul>
+                   <form class="add-subtask-form"><input type="text" placeholder="Neue Unteraufgabe..." required><button type="submit">+</button></form>`;
+renderSubtasks(li, todo);
+return li;
+}
+
+function renderSubtasks(parentLi, todo) {
+const subtaskList = parentLi.querySelector('.subtask-list');
+subtaskList.innerHTML = '';
+if (!todo.subtasks) todo.subtasks = [];
+todo.subtasks.forEach((subtask, index) => {
+const subtaskLi = document.createElement('li');
+subtaskLi.className = `subtask-item ${subtask.completed ? 'completed' : ''}`;
+subtaskLi.innerHTML = `<input type="checkbox" data-index="${index}" ${subtask.completed ? 'checked' : ''}><span>${subtask.text}</span><button class="delete-subtask-btn" data-index="${index}">&times;</button>`;
+subtaskList.appendChild(subtaskLi);
+});
+}
+
+function renderRoutineList() {
+routineListElement.innerHTML = '';
+state.routine.forEach(section => {
+const h3 = document.createElement('h3');
+h3.textContent = section.title;
+routineListElement.appendChild(h3);
+section.items.forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
+                        routineListElement.appendChild(li);
+                        if (item.type === 'heading') {
+                            const headingSpan = document.createElement('span');
+                            headingSpan.className = 'routine-heading';
+                            headingSpan.textContent = item.text;
+                            routineListElement.appendChild(headingSpan);
+                        } else {
+                            const li = document.createElement('li');
+                            if (item.indent) {
+                                li.classList.add('indented');
+                            }
+                            li.innerHTML = `<input type="checkbox" id="${item.id}" ${item.completed ? 'checked' : ''}><label for="${item.id}">${item.text}</label>`;
+                            routineListElement.appendChild(li);
+                        }
+});
+});
+}
+
+function updateCurrentTimeIndicator() {
+const indicator = document.getElementById('time-indicator');
+if (!indicator) return;
+const now = new Date();
+const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
+const plannerStartMinutes = PLANNER_START_HOUR * 60;
+const plannerEndMinutes = 21 * 60;
+const currentPositionInMinutes = minutesSinceMidnight - plannerStartMinutes;
+if (minutesSinceMidnight >= plannerStartMinutes && minutesSinceMidnight <= plannerEndMinutes) {
+indicator.style.display = 'block';
+indicator.style.top = `${currentPositionInMinutes}px`;
+} else {
+indicator.style.display = 'none';
+}
+}
+
+function addEventListeners() {
+form.addEventListener('submit', handleAddTodo);
+document.body.addEventListener('click', handleBodyClick);
+document.body.addEventListener('change', handleCheckboxChange);
+document.body.addEventListener('blur', handleNotesBlur, true);
+document.body.addEventListener('submit', handleSubtaskSubmit);
+document.body.addEventListener('dblclick', handleDoubleClickEdit);
+document.body.addEventListener('click', handleCategoryClick);
+
+plannerInputCancel.addEventListener('click', () => {
+plannerInputModal.style.display = 'none';
+const tempEvent = plannerGrid.querySelector('.planner-event.temp');
+if (tempEvent) {
+tempEvent.remove();
+}
+});
+
+document.addEventListener('click', (e) => {
+if (activeSubtaskForm && !activeSubtaskForm.closest('.todo-item').contains(e.target)) {
+activeSubtaskForm.style.display = 'none';
+activeSubtaskForm = null;
+}
+});
+
+Object.keys(modalButtons).forEach(key => modalButtons[key].addEventListener('click', () => toggleModal(modals[key], true)));
+Object.values(modals).forEach(modal => modal.addEventListener('click', e => {
+if (e.target === modal || e.target.classList.contains('modal-close-btn')) toggleModal(modal, false);
+}));
+
+timerControlButton.addEventListener('click', togglePauseTimer);
+timerCancelButton.addEventListener('click', cancelTimer);
+newDayButton.addEventListener('click', handleNewDay);
+startNextTaskBtn.addEventListener('click', startNextTask);
+globalStartNextBtn.addEventListener('click', startNextTask);
+plannerGrid.addEventListener('mousedown', handlePlannerInteraction);
+}
+
+function updateTodoText(todoId, newText) {
+let todoUpdated = false;
+for (const listName in state.todos) {
+const todo = state.todos[listName].find(t => t.id === todoId);
+if (todo) {
+todo.text = newText;
+todoUpdated = true;
+break;
+}
+}
+
+if (todoUpdated) {
+const eventToUpdate = state.plannerEvents.find(e => e.todoId === todoId);
+if (eventToUpdate) {
+eventToUpdate.text = newText;
+}
+saveAndRerender();
+renderPlannerEvents();
+}
+}
+
+function handleDoubleClickEdit(e) {
+const taskContentSpan = e.target.closest('.task-content');
+if (!taskContentSpan) return;
+
+const todoItem = taskContentSpan.closest('.todo-item');
+if (!todoItem || todoItem.querySelector('.edit-task-input')) return;
+
+const originalText = todoItem.dataset.text;
+taskContentSpan.style.display = 'none';
+
+const input = document.createElement('input');
+input.type = 'text';
+input.value = originalText;
+input.className = 'edit-task-input';
+
+taskContentSpan.parentNode.insertBefore(input, taskContentSpan);
+
+input.focus();
+input.select();
+
+const finishEditing = () => {
+const newText = input.value.trim();
+input.removeEventListener('blur', finishEditing);
+input.removeEventListener('keydown', handleKeydown);
+
+if (newText && newText !== originalText) {
+const todoId = todoItem.dataset.id;
+updateTodoText(todoId, newText);
+} else {
+input.remove();
+taskContentSpan.style.display = 'block';
+}
+};
+
+const handleKeydown = (event) => {
+if (event.key === 'Enter') {
+finishEditing();
+} else if (event.key === 'Escape') {
+input.value = originalText;
+finishEditing();
+}
+};
+
+input.addEventListener('blur', finishEditing);
+input.addEventListener('keydown', handleKeydown);
+}
+
+function handleCategoryClick(e) {
+if (!e.target.classList.contains('category-box')) return;
+
+const container = e.target.parentElement;
+container.querySelectorAll('.category-box').forEach(btn => {
+btn.classList.remove('active');
+btn.style.backgroundColor = 'transparent';
+btn.style.borderColor = 'var(--border-color)';
+});
+
+e.target.classList.add('active');
+const activeCategoryKey = e.target.dataset.category;
+const activeColor = CATEGORIES[activeCategoryKey].color;
+e.target.style.borderColor = activeColor;
+e.target.style.backgroundColor = `rgba(${parseInt(activeColor.slice(1,3),16)},${parseInt(activeColor.slice(3,5),16)},${parseInt(activeColor.slice(5,7),16)},0.2)`;
+
+const isPlannerModal = container.closest('.input-modal-overlay');
+const textInput = isPlannerModal 
+? document.getElementById('planner-input-text') 
+: form.querySelector('input[type="text"]');
+
+if (activeCategoryKey === 'pause') {
+textInput.value = 'Pause';
+textInput.disabled = true;
+} else {
+if (textInput.value === 'Pause') textInput.value = '';
+textInput.disabled = false;
+}
+}
+
+function handleAddTodo(e) {
+e.preventDefault();
+const textInput = form.querySelector('input[type="text"]');
+const timeInput = form.querySelector('input[type="number"]');
+const activeCategoryButton = form.querySelector('.category-box.active');
+const selectedCategory = activeCategoryButton ? activeCategoryButton.dataset.category : 'focus';
+const todoId = 'todo_' + Date.now().toString();
+const time = parseInt(timeInput.value, 10);
+
+const { startHour, startMinutes } = findNextAvailableSlot(time);
+const newPlannerEvent = {
+id: 'event_' + Date.now().toString(),
+todoId: todoId,
+text: textInput.value,
+startHour: startHour,
+startMinutes: startMinutes,
+durationMinutes: time,
+category: selectedCategory
+};
+state.plannerEvents.push(newPlannerEvent);
+
+syncPlannerEventToTodo(newPlannerEvent);
+
+form.reset();
+textInput.disabled = false;
+renderCategorySelectors();
+}
+
+function findTodoById(id, listName) { return state.todos[listName]?.find(t => t.id === id); }
+
+function handleBodyClick(e) {
+const target = e.target;
+if (target.classList.contains('edit-task-input')) return;
+const todoItem = target.closest('.todo-item');
+if (!todoItem) return;
+const id = todoItem.dataset.id;
+const listName = todoItem.dataset.list;
+const todo = findTodoById(id, listName);
+
+if (target.closest('.task-timer-btn')) {
+if (state.timer.activeTaskItem && state.timer.activeTaskItem.dataset.id === id) {
+togglePauseTimer();
+} else {
+if (state.timer.isRunning || state.timer.isPaused) {
+cancelTimer();
+}
+startTimer(todo.time * 60, todoItem);
+}
+} else if (target.closest('.delete-btn')) {
+deletePlannerEventAndTodoByTodoId(id);
+} else if (target.closest('.toggle-notes-btn')) {
+const notesArea = todoItem.querySelector('.notes-area');
+notesArea.style.display = notesArea.style.display === 'none' ? 'block' : 'none';
+if (notesArea.style.display === 'block') notesArea.focus();
+} else if (target.closest('.add-subtask-btn')) {
+const subtaskForm = todoItem.querySelector('.add-subtask-form');
+if (activeSubtaskForm && activeSubtaskForm !== subtaskForm) activeSubtaskForm.style.display = 'none';
+const isVisible = subtaskForm.style.display === 'flex';
+subtaskForm.style.display = isVisible ? 'none' : 'flex';
+if (!isVisible) {
+activeSubtaskForm = subtaskForm;
+subtaskForm.querySelector('input').focus();
+} else {
+activeSubtaskForm = null;
+}
+} else if (target.closest('.delete-subtask-btn')) {
+const index = parseInt(target.closest('.delete-subtask-btn').dataset.index, 10);
+todo.subtasks.splice(index, 1);
+saveState();
+renderSubtasks(todoItem, todo);
+}
+}
+
+function handleCheckboxChange(e) {
+const target = e.target;
+if (target.type !== 'checkbox') return;
+const subtaskItem = target.closest('.subtask-item');
+if (subtaskItem) {
+const parentTodoItem = subtaskItem.closest('.todo-item');
+const id = parentTodoItem.dataset.id;
+const listName = parentTodoItem.dataset.list;
+const todo = findTodoById(id, listName);
+const index = parseInt(target.dataset.index, 10);
+todo.subtasks[index].completed = target.checked;
+saveState();
+renderSubtasks(parentTodoItem, todo);
+return;
+}
+const todoItem = target.closest('.todo-item');
+if (todoItem && target.parentElement.classList.contains('todo-item-main')) {
+const id = todoItem.dataset.id;
+const listName = todoItem.dataset.list;
+const todo = findTodoById(id, listName);
+todo.completed = target.checked;
+
+if (target.checked && state.timer.activeTaskItem && state.timer.activeTaskItem.dataset.id === id) {
+cancelTimer();
+}
+
+if (target.checked) {
+playSound();
+state.totalTimeWorked += todo.time;
+} else {
+state.totalTimeWorked -= todo.time;
+}
+saveAndRerender();
+updateDailyProgress();
+return;
+}
+const routineLi = target.closest('#routine-list li');
+if (routineLi) {
+let foundItem = null;
+for (const section of state.routine) {
+const item = section.items.find(i => i.id === target.id);
+if (item) {
+foundItem = item;
+break;
+}
+}
+if (foundItem) {
+foundItem.completed = target.checked;
+saveState();
+}
+}
+}
+function handleNotesBlur(e) {
+if (e.target.classList.contains('notes-area')) {
+const todoItem = e.target.closest('.todo-item');
+const id = todoItem.dataset.id;
+const listName = todoItem.dataset.list;
+const todo = findTodoById(id, listName);
+todo.notes = e.target.value;
+saveState();
+}
+}
+function handleSubtaskSubmit(e) {
+if (e.target.classList.contains('add-subtask-form')) {
+e.preventDefault();
+const form = e.target;
+const input = form.querySelector('input');
+const parentTodoItem = form.closest('.todo-item');
+const id = parentTodoItem.dataset.id;
+const listName = parentTodoItem.dataset.list;
+const todo = findTodoById(id, listName);
+todo.subtasks.push({ text: input.value, completed: false });
+saveState();
+renderSubtasks(parentTodoItem, todo);
+form.reset();
+}
+}
+function handleNewDay() { localStorage.clear(); location.reload(); }
+function startNextTask() {
+const allTasks = [...state.todos.vormittag, ...state.todos.nachmittag];
+const nextTodo = allTasks.find(t => !t.completed);
+if (nextTodo) {
+const todoItemElement = document.querySelector(`.todo-item[data-id='${nextTodo.id}']`);
+if (todoItemElement) startTimer(nextTodo.time * 60, todoItemElement);
+} else {
+startNextTaskBtn.textContent = 'Alle Aufgaben erledigt!';
+globalStartNextBtn.textContent = 'Fertig!';
+setTimeout(() => { 
+startNextTaskBtn.textContent = 'Nächste Aufgabe starten';
+globalStartNextBtn.textContent = '▶ Nächste';
+}, 2000);
+}
+}
+function updateFocusSessionView() {
+const timerIsActive = state.timer.isRunning || state.timer.isPaused;
+timerDisplay.style.display = timerIsActive ? 'block' : 'none';
+startNextTaskBtn.style.display = timerIsActive ? 'none' : 'block';
+document.querySelector('.timer-controls').style.display = timerIsActive ? 'flex' : 'none';
+}
+function updateGlobalControlsView() {
+const timerIsActive = state.timer.isRunning || state.timer.isPaused;
+globalTimerDisplay.style.display = timerIsActive ? 'block' : 'none';
+timerProgressBand.style.display = timerIsActive ? 'block' : 'none';
+globalStartNextBtn.style.display = timerIsActive ? 'none' : 'block';
+}
+function startTimer(duration, taskItem) {
+if (state.timer.isRunning || state.timer.isPaused) return;
+totalDurationForProgress = duration;
+timerProgressBand.style.background = `conic-gradient(var(--accent-color) 360deg, transparent 360deg)`;
+state.timer.secondsLeft = duration;
+state.timer.isRunning = true;
+state.timer.isPaused = false;
+if (state.timer.activeTaskItem) {
+state.timer.activeTaskItem.classList.remove('timer-active');
+                    state.timer.activeTaskItem.querySelector('.task-timer-btn').innerHTML = ICONS.play;
+}
+const currentlyActive = document.querySelector('.todo-item.timer-active');
+if (currentlyActive) {
+currentlyActive.classList.remove('timer-active');
+}
+taskItem.classList.add('timer-active');
+taskItem.querySelector('.task-timer-btn').innerHTML = ICONS.pause;
+state.timer.activeTaskItem = taskItem;
+state.timer.interval = setInterval(updateTimer, 1000);
+updateTimerUI();
+modalButtons.focusSession.classList.add('active');
+updateFocusSessionView();
+updateGlobalControlsView();
+}
+function updateTimer() {
+state.timer.secondsLeft--;
+updateTimerUI();
+const percentage = state.timer.secondsLeft / totalDurationForProgress;
+const angle = percentage * 360;
+timerProgressBand.style.background = `conic-gradient(var(--accent-color) ${angle}deg, transparent ${angle}deg)`;
+if (state.timer.secondsLeft < 0) {
+clearInterval(state.timer.interval);
+const checkbox = state.timer.activeTaskItem.querySelector('input[type="checkbox"]');
+checkbox.checked = true;
+checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+resetTimerState();
+}
+}
+function togglePauseTimer() {
+if (!state.timer.activeTaskItem) return;
+state.timer.isPaused = !state.timer.isPaused;
+if (state.timer.isPaused) {
+state.timer.isRunning = false;
+clearInterval(state.timer.interval);
+timerControlButton.textContent = 'Fortsetzen';
+state.timer.activeTaskItem.querySelector('.task-timer-btn').innerHTML = ICONS.play;
+} else {
+state.timer.isRunning = true;
+state.timer.interval = setInterval(updateTimer, 1000);
+timerControlButton.textContent = 'Pause';
+state.timer.activeTaskItem.querySelector('.task-timer-btn').innerHTML = ICONS.pause;
+}
+updateGlobalControlsView();
+}
+function cancelTimer() { clearInterval(state.timer.interval); resetTimerState(); }
+function resetTimerState() {
+if (state.timer.activeTaskItem) {
+state.timer.activeTaskItem.classList.remove('timer-active');
+state.timer.activeTaskItem.querySelector('.task-timer-btn').innerHTML = ICONS.play;
+}
+state.timer.isRunning = false;
+state.timer.isPaused = false;
+state.timer.interval = null;
+state.timer.activeTaskItem = null;
+state.timer.secondsLeft = 1500;
+updateTimerUI();
+modalButtons.focusSession.classList.remove('active');
+                document.querySelectorAll('.task-timer-btn').forEach(btn => btn.innerHTML = ICONS.play);
+document.title = 'Fokus Dashboard';
+updateFocusSessionView();
+updateGlobalControlsView();
+}
+function updateTimerUI() {
+const minutes = Math.floor(Math.max(0, state.timer.secondsLeft) / 60);
+const seconds = Math.max(0, state.timer.secondsLeft) % 60;
+const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+timerDisplay.textContent = display;
+globalTimerDisplay.textContent = display;
+if (state.timer.isRunning || state.timer.isPaused) {
+document.title = `${display} - Fokus Dashboard`;
+}
+}
+function formatMinutesToHours(minutes) {
+if (isNaN(minutes) || minutes === 0) return '0m';
+const h = Math.floor(minutes / 60);
+const m = minutes % 60;
+let result = '';
+if (h > 0) result += `${h}h `;
+if (m > 0) result += `${m}m`;
+return result.trim();
+}
+function updateDailyProgress() {
+const allTasks = [...state.todos.vormittag, ...state.todos.nachmittag];
+const totalTimeOfAllTasks = allTasks.reduce((sum, t) => sum + t.time, 0);
+const workedTime = state.totalTimeWorked;
+const workedTimeFormatted = formatMinutesToHours(workedTime);
+const totalTimeFormatted = formatMinutesToHours(totalTimeOfAllTasks);
+progressTimeDisplay.textContent = `${workedTimeFormatted} / ${totalTimeFormatted}`;
+const percentage = totalTimeOfAllTasks > 0 ? (workedTime / totalTimeOfAllTasks) * 100 : 0;
+dailyProgressBar.style.width = `${Math.min(percentage, 100)}%`;
+headerProgressBar.style.width = `${Math.min(percentage, 100)}%`;
+}
+function renderPlannerTimeline() {
+plannerTimeline.innerHTML = '';
+for (let hour = PLANNER_START_HOUR; hour <= 21; hour++) {
+const timeSlot = document.createElement('div');
+timeSlot.textContent = `${hour}:00`;
+plannerTimeline.appendChild(timeSlot);
+}
+}
+function renderPlannerEvents() {
+const events = plannerGrid.querySelectorAll('.planner-event');
+events.forEach(e => e.remove());
+state.plannerEvents.forEach(event => {
+const eventEl = document.createElement('div');
+eventEl.className = 'planner-event';
+eventEl.dataset.id = event.id;
+eventEl.dataset.category = event.category || 'focus';
+eventEl.innerHTML = `<span class="planner-event-text">${event.text}</span><button class="planner-delete-btn">&times;</button><div class="planner-event-resize-handle"></div>`;
+eventEl.style.top = `${(event.startHour - PLANNER_START_HOUR) * HOUR_HEIGHT + (event.startMinutes || 0)}px`;
+eventEl.style.height = `${event.durationMinutes}px`;
+plannerGrid.appendChild(eventEl);
+});
+}
+function handlePlannerInteraction(e) {
+if (e.button !== 0) return;
+const target = e.target;
+if (target.classList.contains('planner-delete-btn')) {
+const eventEl = e.target.closest('.planner-event');
+deletePlannerEventAndTodo(eventEl.dataset.id);
+e.stopPropagation();
+return;
+}
+plannerAction.active = true;
+plannerAction.initialY = e.clientY;
+if (target.classList.contains('planner-event')) {
+plannerAction.type = 'move';
+plannerAction.target = target;
+plannerAction.initialTop = target.offsetTop;
+} else if (target.classList.contains('planner-event-resize-handle')) {
+plannerAction.type = 'resize';
+plannerAction.target = target.parentElement;
+plannerAction.initialHeight = plannerAction.target.offsetHeight;
+} else if (target === plannerGrid) {
+plannerAction.type = 'create';
+const newEventEl = document.createElement('div');
+newEventEl.className = 'planner-event temp'; // Add temp class
+                    const startTop = e.offsetY - (e.offsetY % 15);
+                    const startTop = e.offsetY - (e.offsetY % 5);
+newEventEl.style.top = `${startTop}px`;
+newEventEl.style.height = '30px';
+plannerGrid.appendChild(newEventEl);
+plannerAction.target = newEventEl;
+plannerAction.initialTop = startTop;
+}
+document.addEventListener('mousemove', onPlannerMouseMove);
+document.addEventListener('mouseup', onPlannerMouseUp);
+}
+function onPlannerMouseMove(e) {
+if (!plannerAction.active) return;
+const dy = e.clientY - plannerAction.initialY;
+                const snap = 15;
+                const snap = 5;
+if (plannerAction.type === 'move') {
+let newTop = plannerAction.initialTop + dy;
+newTop = Math.max(0, Math.round(newTop / snap) * snap);
+plannerAction.target.style.top = `${newTop}px`;
+} else if (plannerAction.type === 'resize' || plannerAction.type === 'create') {
+let newHeight = (plannerAction.type === 'create' ? 30 : plannerAction.initialHeight) + dy;
+newHeight = Math.max(snap, Math.round(newHeight / snap) * snap);
+plannerAction.target.style.height = `${newHeight}px`;
+}
+}
+function onPlannerMouseUp() {
+if (!plannerAction.active) return;
+const targetEl = plannerAction.target;
+document.removeEventListener('mousemove', onPlannerMouseMove);
+document.removeEventListener('mouseup', onPlannerMouseUp);
+if (plannerAction.type === 'create') {
+plannerInputModal.style.display = 'flex';
+plannerInputText.value = '';
+plannerInputText.disabled = false;
+renderCategorySelectors();
+plannerInputText.focus();
+
+const saveHandler = () => {
+const text = plannerInputText.value;
+const activeCategoryButton = plannerInputModal.querySelector('.category-box.active');
+const selectedCategory = activeCategoryButton ? activeCategoryButton.dataset.category : 'focus';
+if (text && text.trim() !== '') {
+targetEl.classList.remove('temp');
+const newEvent = { 
+id: Date.now().toString(), 
+todoId: 'todo_' + Date.now().toString(), 
+text: text, 
+category: selectedCategory
+};
+state.plannerEvents.push(newEvent);
+updatePlannerEventFromElementData(newEvent, targetEl.offsetTop, targetEl.offsetHeight);
+} else {
+targetEl.remove();
+}
+plannerInputModal.style.display = 'none';
+plannerInputSave.removeEventListener('click', saveHandler);
+};
+plannerInputSave.addEventListener('click', saveHandler, { once: true });
+} else {
+updatePlannerEventFromElement(targetEl);
+renderPlannerEvents();
+}
+plannerAction.active = false;
+}
+function updatePlannerEventFromElementData(event, top, height) {
+if (!event) return;
+const totalMinutesFromStart = top;
+event.startHour = PLANNER_START_HOUR + Math.floor(totalMinutesFromStart / HOUR_HEIGHT);
+event.startMinutes = totalMinutesFromStart % HOUR_HEIGHT;
+event.durationMinutes = height;
+syncPlannerEventToTodo(event);
+}
+function updatePlannerEventFromElement(element) {
+const eventId = element.dataset.id;
+const event = state.plannerEvents.find(e => e.id === eventId);
+updatePlannerEventFromElementData(event, element.offsetTop, element.offsetHeight);
+}
+function syncPlannerEventToTodo(plannerEvent) {
+let correspondingTodo = findTodoById(plannerEvent.todoId, 'vormittag') || findTodoById(plannerEvent.todoId, 'nachmittag');
+const listName = (plannerEvent.startHour + (plannerEvent.startMinutes / 60)) < 13 ? 'vormittag' : 'nachmittag';
+if (!correspondingTodo) {
+correspondingTodo = { 
+id: plannerEvent.todoId, 
+text: plannerEvent.text, 
+subtasks: [], 
+notes: '', 
+completed: false, 
+time: plannerEvent.durationMinutes,
+category: plannerEvent.category
+};
+state.todos[listName].push(correspondingTodo);
+} else {
+correspondingTodo.time = plannerEvent.durationMinutes;
+correspondingTodo.category = plannerEvent.category;
+const otherList = listName === 'vormittag' ? 'nachmittag' : 'vormittag';
+const indexInOtherList = state.todos[otherList].findIndex(t => t.id === correspondingTodo.id);
+if (indexInOtherList > -1) {
+const [movedTodo] = state.todos[otherList].splice(indexInOtherList, 1);
+if (!state.todos[listName].find(t => t.id === movedTodo.id)) {
+state.todos[listName].push(movedTodo);
+}
+}
+}
+saveAndRerender();
+renderPlannerEvents();
+updateDailyProgress();
+}
+function deletePlannerEventAndTodo(eventId) {
+const eventIndex = state.plannerEvents.findIndex(e => e.id === eventId);
+if (eventIndex === -1) return;
+const [deletedEvent] = state.plannerEvents.splice(eventIndex, 1);
+deletePlannerEventAndTodoByTodoId(deletedEvent.todoId);
+}
+function deletePlannerEventAndTodoByTodoId(todoId) {
+state.plannerEvents = state.plannerEvents.filter(e => e.todoId !== todoId);
+state.todos.vormittag = state.todos.vormittag.filter(t => t.id !== todoId);
+state.todos.nachmittag = state.todos.nachmittag.filter(t => t.id !== todoId);
+saveAndRerender();
+renderPlannerEvents();
+updateDailyProgress();
+}
+function findNextAvailableSlot(durationMinutes) {
+const sortedEvents = [...state.plannerEvents].sort((a, b) => (a.startHour * 60 + a.startMinutes) - (b.startHour * 60 + b.startMinutes));
+let lastEndTime = PLANNER_START_HOUR * 60;
+if (sortedEvents.length === 0) {
+return { startHour: 9, startMinutes: 0 };
+}
+for (const event of sortedEvents) {
+const eventStart = event.startHour * 60 + event.startMinutes;
+if (eventStart - lastEndTime >= durationMinutes) {
+return { startHour: Math.floor(lastEndTime / 60), startMinutes: lastEndTime % 60 };
+}
+lastEndTime = eventStart + event.durationMinutes;
+}
+return { startHour: Math.floor(lastEndTime / 60), startMinutes: lastEndTime % 60 };
+}
+function saveAndRerender() { 
+saveState(); 
+renderAllTodos();
+}
+function toggleModal(modal, show) { modal.classList.toggle('visible', show); }
+function playSound() {
+if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const oscillator = audioCtx.createOscillator();
+const gainNode = audioCtx.createGain();
+oscillator.connect(gainNode);
+gainNode.connect(audioCtx.destination);
+oscillator.type = 'sine';
+oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+oscillator.start();
+gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+oscillator.stop(audioCtx.currentTime + 0.5);
+}
+
+init();
+});
+</script>
+</body>
+</html>
