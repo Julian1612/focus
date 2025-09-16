@@ -4,7 +4,7 @@
  */
 
 // In a real backend scenario, this list would be fetched from the server.
-const APP_DIRECTORIES = ['focus-fm', 'routine', 'notes', 'todays-focus'];
+const APP_DIRECTORIES = ['focus-fm', 'routine', 'notes', 'todays-focus', 'daily-progress'];
 
 // NEU: This creates a guaranteed-correct URL to the project's root directory.
 // It works by taking the full URL of this script and navigating up two levels.
