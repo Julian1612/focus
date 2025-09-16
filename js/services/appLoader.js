@@ -1,10 +1,14 @@
 /**
  * Dynamically discovers and loads apps from the /apps/ directory.
- * It creates sidebar buttons and modals for each detected app.
+ * This version uses import.meta.url to create robust, portable paths.
  */
 
 // In a real backend scenario, this list would be fetched from the server.
 const APP_DIRECTORIES = ['focus-fm', 'routine', 'notes', 'todays-focus'];
+
+// NEU: This creates a guaranteed-correct URL to the project's root directory.
+// It works by taking the full URL of this script and navigating up two levels.
+const rootURL = new URL('../../', import.meta.url);
 
 const loadedApps = new Map();
 
@@ -27,12 +31,12 @@ export async function initAppLoader(sidebarEl, dashboardAPI) {
 }
 
 async function fetchManifest(appDir) {
-    // This path is relative to index.html and works correctly for fetch.
-    const response = await fetch(`apps/${appDir}/app.json`);
+    // GEÄNDERT: Construct the full URL relative to our calculated project root.
+    const manifestURL = new URL(`apps/${appDir}/app.json`, rootURL);
+    const response = await fetch(manifestURL);
     if (!response.ok) {
-        throw new Error(`Could not fetch manifest for ${appDir}`);
+        throw new Error(`Could not fetch manifest for ${appDir} at ${manifestURL}`);
     }
-    // We don't need to store a basePath anymore as we'll construct paths contextually.
     return await response.json();
 }
 
@@ -53,6 +57,7 @@ function registerApp(manifest, sidebarEl, dashboardAPI) {
 }
 
 function createAppModal(manifest) {
+    // This function remains the same.
     const modalOverlay = document.createElement('div');
     modalOverlay.id = `modal-${manifest.id}`;
     modalOverlay.className = 'modal-overlay';
@@ -63,13 +68,11 @@ function createAppModal(manifest) {
                 </div>
         </div>
     `;
-
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay || e.target.classList.contains('modal-close-btn')) {
             toggleModal(modalOverlay, false);
         }
     });
-
     return modalOverlay;
 }
 
@@ -80,19 +83,15 @@ async function loadApp(manifest, modal, dashboardAPI) {
 
     const contentContainer = modal.querySelector('.app-content-container');
     try {
-        // GEÄNDERT: Construct separate paths for fetch and import.
+        // GEÄNDERT: Construct full URLs for both HTML and JS files.
+        const htmlURL = new URL(`apps/${manifest.id}/${manifest.entrypoints.html}`, rootURL);
+        const jsURL = new URL(`apps/${manifest.id}/${manifest.entrypoints.js}`, rootURL);
 
-        // Path for fetch(), relative to index.html
-        const htmlPath = `apps/${manifest.id}/${manifest.entrypoints.html}`;
-
-        // Path for import(), relative to this file (appLoader.js)
-        const jsPath = `../../apps/${manifest.id}/${manifest.entrypoints.js}`;
-
-        const htmlResponse = await fetch(htmlPath);
+        const htmlResponse = await fetch(htmlURL);
         if (!htmlResponse.ok) throw new Error('Failed to load HTML.');
         contentContainer.innerHTML = await htmlResponse.text();
         
-        const appModule = await import(jsPath);
+        const appModule = await import(jsURL);
         
         if (appModule && typeof appModule.init === 'function') {
             appModule.init(dashboardAPI, contentContainer);
@@ -106,5 +105,6 @@ async function loadApp(manifest, modal, dashboardAPI) {
 }
 
 function toggleModal(modal, show) {
+    // This function remains the same.
     modal.classList.toggle('visible', show);
 }
