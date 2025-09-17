@@ -723,3 +723,56 @@ body {
     cursor: not-allowed;
     background-color: var(--border-color);
 }
+
+/* START: New Fullscreen Modal Styles */
+
+/* START: Angepasste Fullscreen Modal Styles */
+
+.main-content-hidden {
+    display: none !important;
+}
+
+/* Passt das Overlay selbst an */
+.modal-overlay--fullscreen {
+    /* Fügt eine leichte Polsterung hinzu, damit das Fenster nicht am Rand klebt */
+    padding: 24px;
+    padding-left: 84px; /* 60px für die Sidebar + 24px Polsterung */
+}
+
+/* Gestaltet den Inhalt des Modals wie ein Pop-up */
+.modal-overlay--fullscreen .modal-content {
+    /* Nimmt den vollen verfügbaren Platz innerhalb der neuen Polsterung ein */
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    
+    /* Hebt die Neupositionierung auf, da das Overlay jetzt die Positionierung übernimmt */
+    top: auto;
+    left: auto;
+    margin: 0;
+    transform: none;
+    
+    /* Wichtige visuelle Änderungen */
+    border-radius: 16px; /* Abgerundete Ecken für den Pop-up-Look */
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4); /* Ein Schatten, um es "schweben" zu lassen */
+    border: 1px solid var(--border-color); /* Eine feine Kante */
+    
+    /* Der Inhalt der App soll den Platz füllen */
+    overflow: hidden;
+    padding: 0; 
+}
+
+/* Stellt sicher, dass der Container für die App den gesamten Platz ausfüllt */
+.modal-overlay--fullscreen .app-content-container {
+    height: 100%;
+    width: 100%;
+}
+
+/* Positioniert den Schließen-Button deutlich sichtbar im Pop-up */
+.modal-overlay--fullscreen .modal-close-btn {
+    top: 16px;
+    right: 16px;
+    z-index: 1000; 
+}
+
+/* END: New Fullscreen Modal Styles */

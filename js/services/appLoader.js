@@ -6,11 +6,11 @@
 // In a real backend scenario, this list would be fetched from the server.
 const APP_DIRECTORIES = ['focus-fm', 'routine', 'notes', 'todays-focus', 'gtd-board'];
 
-// NEU: This creates a guaranteed-correct URL to the project's root directory.
-// It works by taking the full URL of this script and navigating up two levels.
 const rootURL = new URL('../../', import.meta.url);
-
 const loadedApps = new Map();
+
+// Get a reference to the main content area
+const mainContent = document.querySelector('.main-content');
 
 /**
  * Initializes the app loading process.
@@ -31,23 +31,33 @@ export async function initAppLoader(sidebarEl, dashboardAPI) {
 }
 
 async function fetchManifest(appDir) {
-    // GEÄNDERT: Construct the full URL relative to our calculated project root.
     const manifestURL = new URL(`apps/${appDir}/app.json`, rootURL);
     const response = await fetch(manifestURL);
     if (!response.ok) {
         throw new Error(`Could not fetch manifest for ${appDir} at ${manifestURL}`);
     }
-    return await response.json();
+    const manifest = await response.json();
+    // Ensure the manifest has an 'id', using the directory name as a fallback.
+    manifest.id = manifest.id || appDir;
+    return manifest;
 }
 
 function registerApp(manifest, sidebarEl, dashboardAPI) {
     const modal = createAppModal(manifest);
+
+    // If the app requests fullscreen, add a special class to its modal.
+    if (manifest.displayMode === 'fullscreen') {
+        modal.classList.add('modal-overlay--fullscreen');
+    }
+
     document.body.appendChild(modal);
 
     const button = document.createElement('button');
     button.className = 'sidebar-btn';
     button.title = manifest.name;
     button.innerHTML = manifest.icon;
+
+    // The click handler is now the same simple logic for all apps.
     button.addEventListener('click', () => {
         toggleModal(modal, true);
         loadApp(manifest, modal, dashboardAPI);
@@ -55,6 +65,7 @@ function registerApp(manifest, sidebarEl, dashboardAPI) {
 
     sidebarEl.insertBefore(button, sidebarEl.lastElementChild);
 }
+
 
 function createAppModal(manifest) {
     // This function remains the same.
@@ -77,13 +88,13 @@ function createAppModal(manifest) {
 }
 
 async function loadApp(manifest, modal, dashboardAPI) {
+    // This function remains the same.
     if (loadedApps.has(manifest.id)) {
         return;
     }
 
     const contentContainer = modal.querySelector('.app-content-container');
     try {
-        // GEÄNDERT: Construct full URLs for both HTML and JS files.
         const htmlURL = new URL(`apps/${manifest.id}/${manifest.entrypoints.html}`, rootURL);
         const jsURL = new URL(`apps/${manifest.id}/${manifest.entrypoints.js}`, rootURL);
 
@@ -105,6 +116,10 @@ async function loadApp(manifest, modal, dashboardAPI) {
 }
 
 function toggleModal(modal, show) {
-    // This function remains the same.
     modal.classList.toggle('visible', show);
+
+    // Also hide/show the main dashboard if the modal is a fullscreen one.
+    if (modal.classList.contains('modal-overlay--fullscreen')) {
+        mainContent.classList.toggle('main-content-hidden', show);
+    }
 }

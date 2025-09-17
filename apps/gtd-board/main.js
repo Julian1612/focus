@@ -1,331 +1,249 @@
-export async function init(api, appRootElement) {
+// --- App Constants ---
+const APP_ID = 'gtd-board';
+const CATEGORIES = {
+    work:     { label: 'Work',     color: '#5e5ce6' },
+    personal: { label: 'Personal', color: '#32d74b' },
+    study:    { label: 'Study',    color: '#64d2ff' },
+    urgent:   { label: 'Urgent',   color: '#ff9f0a' },
+};
+const COLUMNS = {
+    'gtd-inbox':    { title: 'Inbox' },
+    'gtd-today':    { title: 'Today' },
+    'gtd-week':     { title: 'This Week' },
+    'gtd-paused':   { title: 'On Hold' },
+    'gtd-sometime': { title: 'Someday' }
+};
 
-    // --- STATE MANAGEMENT & CONFIG ---
-    const columns = {
-        inbox: "📥 Eingang", today: "🎯 Heute", week: "🗓️ Diese Woche",
-        paused: "⏸️ Pausiert / Delegiert", someday: "🤔 Vielleicht / Irgendwann"
-    };
+// --- Module-level State ---
+let state = {
+    tasks: [],
+    activeModalTaskId: null,
+    composerTargetColumn: null,
+};
+let dashboardAPI;
+let appRootElement;
+let isInitialized = false;
 
-    const labelConfig = {
-        'Focus': 'label-focus', 'Meeting': 'label-meeting', 'Privat': 'label-privat',
-        'Organisation': 'label-organisation'
-    };
+// --- State Management ---
+function saveState() {
+    dashboardAPI.saveData(APP_ID, 'tasks', { tasks: state.tasks });
+}
 
-    const getTodayISO = () => new Date().toLocaleDateString('en-CA');
+// --- DOM Rendering ---
+function render() {
+    const columnsContainer = appRootElement.querySelector('.gtd-board-columns');
+    columnsContainer.innerHTML = '';
+    const taskCounts = {};
 
-    const getInitialTasks = async () => {
-        const savedTasks = await api.loadData('gtd-board', 'tasks');
-        if (savedTasks && Object.keys(savedTasks).length > 0) return savedTasks;
-        
-        // Return default tasks if storage is empty
-        return {
-            inbox: [{ id: `task-${Date.now() + 1}`, content: 'Wöchentliches Team-Sync planen', dueDate: null, label: 'Meeting', subtasks: [], notes: "" }],
-            today: [
-                { id: `task-${Date.now() + 2}`, content: 'Präsentation fertigstellen', dueDate: getTodayISO(), label: 'Focus', subtasks: [{text: 'Feedback einarbeiten', done: true}, {text: 'Zahlen prüfen', done: false}], notes: "Final check required." },
-                { id: `task-${Date.now() + 3}`, content: 'Arzttermin vereinbaren', dueDate: getTodayISO(), label: 'Privat', subtasks: [], notes: "" },
-            ],
-            week: [{ id: `task-${Date.now() + 6}`, content: 'Reise buchen', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA'), label: 'Organisation', subtasks: [], notes: "" }],
-            paused: [],
-            someday: [{ id: `task-${Date.now() + 5}`, content: 'Neues Hobby lernen', dueDate: null, label: 'Privat', subtasks: [], notes: "" }]
-        };
-    };
-    
-    let tasks = await getInitialTasks();
-    const saveTasks = () => api.saveData('gtd-board', 'tasks', tasks);
-    
-    // --- CORE LOGIC ---
-    const autoSortTasksByDate = () => {
-        const today = getTodayISO();
-        let tasksMoved = false;
-        Object.keys(tasks).forEach(columnId => {
-            if (columnId === 'today') return;
-            const tasksToMove = [];
-            tasks[columnId] = tasks[columnId].filter(task => {
-                if (task.dueDate === today) {
-                    tasksToMove.push(task);
-                    return false;
-                }
-                return true;
-            });
-            if (tasksToMove.length > 0) {
-                tasks.today = [...tasks.today, ...tasksToMove];
-                tasksMoved = true;
-            }
-        });
-        if (tasksMoved) console.log("GTD Board: Tasks automatically moved to 'Today' column.");
-    };
-
-    // --- RENDERING ---
-    const board = appRootElement.querySelector('#gtd-board');
-    const modalContainer = appRootElement.querySelector('#modal-container');
-
-    const renderBoard = () => {
-        board.innerHTML = ''; 
-        for (const columnId in columns) {
-            const columnEl = document.createElement('div');
-            columnEl.className = 'gtd-column';
-            columnEl.dataset.columnId = columnId;
-            columnEl.innerHTML = `
-                <div class="gtd-column-header">
-                    <h2>${columns[columnId]}</h2>
-                    <span>${tasks[columnId]?.length || 0}</span>
-                </div>
-                <div class="gtd-tasks-container" data-role="tasks-container"></div>
-            `;
-            const tasksContainerEl = columnEl.querySelector('[data-role="tasks-container"]');
-            tasks[columnId]?.forEach(task => tasksContainerEl.appendChild(createTaskElement(task)));
-            
-            if (columnId === 'inbox') {
-                columnEl.appendChild(createAddTaskForm());
-            }
-            board.appendChild(columnEl);
-        }
-        addEventListeners();
-    };
-    
-    const createTaskElement = (task) => {
-        const taskEl = document.createElement('div');
-        taskEl.className = 'gtd-task-card';
-        taskEl.dataset.taskId = task.id;
-        taskEl.draggable = true;
-
-        let labelHtml = '';
-        if (task.label && labelConfig[task.label]) {
-            labelHtml = `<span class="label-tag ${labelConfig[task.label]}">${task.label}</span>`;
-        }
-
-        let dueDateHtml = '';
-        if (task.dueDate) {
-            const today = getTodayISO();
-            const isOverdue = task.dueDate < today;
-            const isToday = task.dueDate === today;
-            let colorClass = '';
-            if (isToday) colorClass = 'due-today';
-            if (isOverdue) colorClass = 'due-overdue';
-            const formattedDate = new Date(task.dueDate).toLocaleDateString('de-DE', { month: 'short', day: 'numeric' });
-            dueDateHtml = `<span class="card-meta-item ${colorClass}">
-                <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
-                ${isToday ? 'Heute' : formattedDate}</span>`;
-        }
-
-        let subtasksHtml = '';
-        if (task.subtasks?.length > 0) {
-            const doneCount = task.subtasks.filter(st => st.done).length;
-            subtasksHtml = `<span class="card-meta-item">
-               <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-               ${doneCount}/${task.subtasks.length}</span>`;
-        }
-        
-        let notesHtml = '';
-        if (task.notes?.trim()) {
-            notesHtml = `<span class="card-meta-item" title="Notiz vorhanden"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg></span>`;
-        }
-
-        taskEl.innerHTML = `
-            <div class="card-header"><p>${task.content}</p>${labelHtml}</div>
-            <div class="card-footer"><div class="card-meta">${dueDateHtml}${subtasksHtml}</div>${notesHtml}</div>
-            <div class="actions">
-                <button data-action="delete" title="Delete Task"><svg viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-            </div>`;
-        return taskEl;
-    };
-
-    const createAddTaskForm = () => {
-        const formContainer = document.createElement('div');
-        formContainer.className = 'add-task-container';
-        
-        const columnOptions = Object.keys(columns).map(columnId => `<option value="${columnId}">${columns[columnId].substring(2).trim()}</option>`).join('');
-        const labelOptions = Object.keys(labelConfig).map(label => `<option value="${label}">${label}</option>`).join('');
-
-        formContainer.innerHTML = `
-            <form id="add-task-form">
-                <input type="text" name="task-content" placeholder="Neue Aufgabe..." required class="gtd-form-input">
-                <select name="task-column" class="gtd-form-select">${columnOptions}</select>
-                <select name="task-label" class="gtd-form-select"><option value="">Label auswählen...</option>${labelOptions}</select>
-                <div class="add-task-bottom-row">
-                    <input type="date" name="task-due-date" class="gtd-form-input" style="margin-bottom: 0;">
-                    <button type="submit" class="add-task-btn" title="Add Task"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg></button>
-                </div>
-            </form>`;
-        return formContainer;
-    };
-
-    // --- EVENT HANDLING & ACTIONS ---
-    const addEventListeners = () => {
-        appRootElement.querySelector('#add-task-form')?.addEventListener('submit', handleAddTask);
-        
-        board.addEventListener('click', (e) => {
-            if (e.target.closest('[data-action="delete"]')) handleDeleteTask(e);
-            else if (e.target.closest('[data-task-id]')) openEditModal(e);
-        });
-
-        board.addEventListener('wheel', (e) => {
-            if (e.deltaY !== 0) { e.preventDefault(); board.scrollLeft += e.deltaY; }
-        });
-
-        appRootElement.querySelectorAll('[draggable="true"]').forEach(d => {
-            d.addEventListener('dragstart', handleDragStart);
-            d.addEventListener('dragend', handleDragEnd);
-        });
-
-        appRootElement.querySelectorAll('[data-role="tasks-container"]').forEach(c => {
-            c.addEventListener('dragover', handleDragOver);
-            c.addEventListener('dragleave', handleDragLeave);
-            c.addEventListener('drop', handleDrop);
-        });
-    };
-
-    const handleAddTask = (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const content = form.elements['task-content'].value.trim();
-        if (!content) return;
-
-        const newTask = {
-            id: `task-${Date.now()}`, content: content,
-            dueDate: form.elements['task-due-date'].value || null,
-            label: form.elements['task-label'].value || null,
-            subtasks: [], notes: ""
-        };
-
-        const targetColumn = form.elements['task-column'].value;
-        tasks[targetColumn].unshift(newTask);
-        saveTasks();
-        autoSortTasksByDate();
-        renderBoard();
-    };
-    
-    const handleDeleteTask = (e) => {
-        const taskId = e.target.closest('[data-task-id]').dataset.taskId;
-        for (const colId in tasks) tasks[colId] = tasks[colId].filter(t => t.id !== taskId);
-        saveTasks();
-        renderBoard();
-    };
-
-    // --- MODAL LOGIC ---
-    const openEditModal = (e) => {
-        const taskId = e.target.closest('[data-task-id]').dataset.taskId;
-        let task;
-        for (const colId in tasks) {
-            const foundTask = tasks[colId].find(t => t.id === taskId);
-            if (foundTask) { task = foundTask; break; }
-        }
-        if (!task) return;
-
-        const labelOptions = Object.keys(labelConfig).map(label => `<option value="${label}" ${task.label === label ? 'selected' : ''}>${label}</option>`).join('');
-
-        modalContainer.innerHTML = `
-        <div class="modal-overlay" data-action="close-modal">
-            <div class="modal-panel" onclick="event.stopPropagation();">
-                <button data-action="close-modal" class="modal-close-btn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-                <div class="modal-header"><h3 class="text-xl font-bold">${task.content}</h3></div>
-                <div class="modal-body">
-                    <div class="modal-grid">
-                        <div>
-                            <label for="modal-due-date">Fälligkeitsdatum</label>
-                            <input type="date" id="modal-due-date" value="${task.dueDate || ''}" class="gtd-form-input">
-                        </div>
-                        <div>
-                            <label for="modal-label">Label</label>
-                            <select id="modal-label" class="gtd-form-select">
-                                <option value="">Kein Label</option>${labelOptions}
-                            </select>
-                        </div>
-                    </div>
-                    <h4>Notizen</h4>
-                    <textarea id="modal-notes" placeholder="Details zur Aufgabe...">${task.notes || ''}</textarea>
-                    <h4>Unteraufgaben</h4>
-                    <div id="modal-subtasks-list"></div>
-                    <form id="add-subtask-form">
-                        <input type="text" name="subtask-content" placeholder="Neue Unteraufgabe..." required class="gtd-form-input" style="margin-bottom: 0;">
-                        <button type="submit" class="add-task-btn"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg></button>
-                    </form>
-                </div>
-            </div>
-        </div>`;
-        
-        const renderSubtasks = () => {
-            const listEl = modalContainer.querySelector('#modal-subtasks-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-            (task.subtasks || []).forEach((subtask, index) => {
-                listEl.innerHTML += `
-                <div class="subtask-item">
-                    <label class="${subtask.done ? 'subtask-done' : ''}">
-                        <input type="checkbox" data-subtask-index="${index}" ${subtask.done ? 'checked' : ''}>
-                        <span>${subtask.text}</span>
-                    </label>
-                    <button data-action="delete-subtask" data-subtask-index="${index}" class="subtask-delete-btn">&times;</button>
-                </div>`;
-            });
-        }
-        renderSubtasks();
-
-        const updateTask = () => { saveTasks(); autoSortTasksByDate(); renderBoard(); };
-
-        modalContainer.querySelector('#modal-due-date').addEventListener('change', (e) => { task.dueDate = e.target.value || null; updateTask(); });
-        modalContainer.querySelector('#modal-label').addEventListener('change', (e) => { task.label = e.target.value || null; updateTask(); });
-        modalContainer.querySelector('#modal-notes').addEventListener('blur', (e) => { task.notes = e.target.value; updateTask(); });
-        modalContainer.querySelector('#add-subtask-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const input = e.target.elements['subtask-content'];
-            if(input.value.trim()){
-                if(!task.subtasks) task.subtasks = [];
-                task.subtasks.push({ text: input.value.trim(), done: false });
-                renderSubtasks(); updateTask();
-                input.value = '';
-            }
-        });
-        modalContainer.addEventListener('change', (e) => {
-           if(e.target.matches('input[type=checkbox][data-subtask-index]')){
-               const index = parseInt(e.target.dataset.subtaskIndex);
-               task.subtasks[index].done = e.target.checked;
-               renderSubtasks(); updateTask();
-           }
-        });
-        modalContainer.addEventListener('click', (e) => {
-           if(e.target.closest('[data-action="delete-subtask"]')){
-               const index = parseInt(e.target.closest('[data-subtask-index]').dataset.subtaskIndex);
-               task.subtasks.splice(index, 1);
-               renderSubtasks(); updateTask();
-           }
-        });
-    };
-    
-    modalContainer.addEventListener('click', (e) => {
-        if(e.target.closest('[data-action="close-modal"]')) modalContainer.innerHTML = '';
+    Object.keys(COLUMNS).forEach(columnId => {
+        taskCounts[columnId] = 0;
+        const columnEl = document.createElement('div');
+        columnEl.className = 'gtd-column';
+        columnEl.innerHTML = `<header class="gtd-column-header"><h3>${COLUMNS[columnId].title}</h3><span id="${columnId}-count" class="gtd-task-count">0</span></header><ul class="task-list" id="${columnId}"></ul><footer class="column-footer"><button class="add-task-btn">+ Add a task</button></footer>`;
+        columnsContainer.appendChild(columnEl);
     });
 
-    // --- DRAG & DROP LOGIC ---
-    let draggedItemId = null;
-    const handleDragStart = e => { draggedItemId = e.target.dataset.taskId; e.target.classList.add('dragging'); };
-    const handleDragEnd = e => {
-        draggedItemId = null;
-        e.target?.classList.remove('dragging');
-        appRootElement.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    };
-    const handleDragOver = e => { e.preventDefault(); e.target.closest('[data-role="tasks-container"]')?.classList.add('drag-over'); };
-    const handleDragLeave = e => e.target.closest('[data-role="tasks-container"]')?.classList.remove('drag-over');
-    const handleDrop = (e) => {
-        e.preventDefault();
-        const targetContainerEl = e.target.closest('[data-role="tasks-container"]');
-        if (!targetContainerEl) return;
-        const targetColumnId = targetContainerEl.parentElement.dataset.columnId;
-        let draggedTask, sourceColumnId;
-        for (const colId in tasks) {
-            const task = tasks[colId].find(t => t.id === draggedItemId);
-            if (task) { draggedTask = task; sourceColumnId = colId; break; }
-        }
-        if (draggedTask && sourceColumnId !== targetColumnId) {
-            tasks[sourceColumnId] = tasks[sourceColumnId].filter(t => t.id !== draggedItemId);
-            tasks[targetColumnId].push(draggedTask);
-            saveTasks(); renderBoard();
-        }
-    };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    // --- INITIALIZE APP ---
-    autoSortTasksByDate();
-    renderBoard();
+    state.tasks.forEach(task => {
+        const column = appRootElement.querySelector(`#${task.column}`);
+        if (!column) return;
+        taskCounts[task.column]++;
+        const card = document.createElement('li');
+        card.className = 'task-card';
+        card.draggable = true;
+        card.dataset.taskId = task.id;
+
+        if (task.category && CATEGORIES[task.category]) {
+            const categoryPill = document.createElement('div');
+            categoryPill.className = `category-pill category--${task.category}`;
+            categoryPill.textContent = CATEGORIES[task.category].label;
+            card.appendChild(categoryPill);
+        }
+
+        const content = document.createElement('div');
+        content.className = 'task-card-content';
+        content.textContent = task.text;
+        card.appendChild(content);
+
+        if (task.dueDate) {
+            const dueDate = new Date(task.dueDate);
+            const badge = document.createElement('div');
+            badge.className = 'due-date-badge';
+            const dueDateNormalized = new Date(dueDate.getTime());
+            dueDateNormalized.setUTCHours(0, 0, 0, 0);
+            if (dueDateNormalized < today) badge.classList.add('due-date-badge--overdue');
+            else if (dueDateNormalized.getTime() === today.getTime()) badge.classList.add('due-date-badge--today');
+            badge.textContent = dueDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+            card.appendChild(badge);
+        }
+
+        if (task.subtasks && task.subtasks.length > 0) {
+            const completed = task.subtasks.filter(st => st.isCompleted).length;
+            const total = task.subtasks.length;
+            const progress = (total > 0) ? (completed / total) * 100 : 0;
+            const progressEl = document.createElement('div');
+            progressEl.className = 'subtask-progress';
+            progressEl.innerHTML = `
+                <div class="subtask-progress-bar-container">
+                    <div class="subtask-progress-bar" style="width: ${progress}%"></div>
+                </div>
+                <span class="subtask-progress-text">${completed}/${total}</span>`;
+            card.appendChild(progressEl);
+        }
+
+        column.appendChild(card);
+    });
+
+    Object.keys(taskCounts).forEach(columnId => {
+        const countElement = appRootElement.querySelector(`#${columnId}-count`);
+        if (countElement) countElement.textContent = taskCounts[columnId];
+    });
+}
+
+function renderSubtasks() {
+    const task = state.tasks.find(t => t.id === state.activeModalTaskId);
+    if (!task) return;
+    const container = appRootElement.querySelector('#gtd-subtask-container .gtd-subtask-list');
+    container.innerHTML = '';
+    task.subtasks.forEach(subtask => {
+        const item = document.createElement('li');
+        item.className = `gtd-subtask-item ${subtask.isCompleted ? 'completed' : ''}`;
+        item.dataset.subtaskId = subtask.id;
+        item.innerHTML = `
+            <input type="checkbox" ${subtask.isCompleted ? 'checked' : ''}>
+            <span class="gtd-subtask-text">${subtask.text}</span>
+            <input type="date" class="gtd-subtask-duedate" value="${subtask.dueDate || ''}">
+            <button class="gtd-subtask-delete-btn">&times;</button>`;
+        container.appendChild(item);
+    });
+}
+
+// --- Modal Functions ---
+function openTaskDetailModal(taskId) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    state.activeModalTaskId = taskId;
+    const modal = appRootElement.querySelector('#gtd-task-modal');
+    modal.querySelector('#gtd-modal-title').textContent = task.text;
+    modal.querySelector('#gtd-modal-notes').value = task.notes || '';
+    modal.querySelector('#gtd-modal-duedate').value = task.dueDate || '';
+    const categorySelector = modal.querySelector('#gtd-category-selector');
+    categorySelector.innerHTML = '';
+    Object.keys(CATEGORIES).forEach(key => {
+        const option = document.createElement('div');
+        option.className = 'gtd-category-option';
+        option.dataset.category = key;
+        option.textContent = CATEGORIES[key].label;
+        if (task.category === key) option.classList.add('active');
+        categorySelector.appendChild(option);
+    });
+    renderSubtasks();
+    modal.classList.add('visible');
+}
+
+function closeTaskDetailModal() {
+    state.activeModalTaskId = null;
+    appRootElement.querySelector('#gtd-task-modal').classList.remove('visible');
+}
+
+function openTaskComposer(columnId) {
+    state.composerTargetColumn = columnId;
+    const modal = appRootElement.querySelector('#gtd-composer-modal');
+    modal.querySelector('#gtd-composer-task-name').value = '';
+    modal.querySelector('#gtd-composer-duedate').value = '';
+    modal.querySelector('#gtd-composer-duedate').classList.remove('visible');
+    appRootElement.querySelector('#gtd-composer-date-btn').classList.remove('active');
+    appRootElement.querySelector('#gtd-composer-category-btn').classList.remove('active');
+    const categorySelector = modal.querySelector('#gtd-composer-category-selector');
+    categorySelector.innerHTML = '';
+    categorySelector.classList.remove('visible');
+    Object.keys(CATEGORIES).forEach(key => {
+        const option = document.createElement('div');
+        option.className = 'gtd-category-option';
+        option.dataset.category = key;
+        option.textContent = CATEGORIES[key].label;
+        categorySelector.appendChild(option);
+    });
+    modal.querySelector('#gtd-composer-add-btn').disabled = true;
+    modal.classList.add('visible');
+    modal.querySelector('#gtd-composer-task-name').focus();
+}
+
+function closeTaskComposer() {
+    state.composerTargetColumn = null;
+    appRootElement.querySelector('#gtd-composer-modal').classList.remove('visible');
+}
+
+// --- Event Handlers ---
+function handleNoteUpdate(e) { const task = state.tasks.find(t => t.id === state.activeModalTaskId); if (task) { task.notes = e.target.value; saveState(); } }
+function handleDueDateUpdate(e) { const task = state.tasks.find(t => t.id === state.activeModalTaskId); if (task) { task.dueDate = e.target.value; saveState(); render(); } }
+function handleCategoryUpdate(e) { const categoryOption = e.target.closest('.gtd-category-option'); if (!categoryOption || !state.activeModalTaskId) return; const task = state.tasks.find(t => t.id === state.activeModalTaskId); if (!task) return; const newCategory = categoryOption.dataset.category; task.category = task.category === newCategory ? null : newCategory; saveState(); render(); const selector = appRootElement.querySelector('#gtd-task-modal #gtd-category-selector'); selector.querySelectorAll('.gtd-category-option').forEach(opt => opt.classList.remove('active')); if (task.category) { selector.querySelector(`[data-category="${task.category}"]`).classList.add('active'); } }
+function handleAddTaskFromComposer() { if (!state.composerTargetColumn) return; const modal = appRootElement.querySelector('#gtd-composer-modal'); const text = modal.querySelector('#gtd-composer-task-name').value.trim(); if (!text) return; const dueDate = modal.querySelector('#gtd-composer-duedate').value || null; const activeCategory = modal.querySelector('#gtd-composer-category-selector .active'); const category = activeCategory ? activeCategory.dataset.category : null; state.tasks.push({ id: `task-${Date.now()}`, text, column: state.composerTargetColumn, notes: '', dueDate, category, subtasks: [] }); saveState(); render(); closeTaskComposer(); }
+function handleComposerInput(e) { appRootElement.querySelector('#gtd-composer-add-btn').disabled = e.target.value.trim().length === 0; }
+function handleDragAndDrop(e) { const card = e.target.closest('.task-card'); if (!card) return; if (e.type === 'dragstart') { e.dataTransfer.setData('text/plain', card.dataset.taskId); setTimeout(() => card.classList.add('is-dragging'), 0); } else if (e.type === 'dragend') { card.classList.remove('is-dragging'); } }
+function handleDrop(e) { e.preventDefault(); const dropZone = e.target.closest('.task-list'); if (!dropZone) return; const taskId = e.dataTransfer.getData('text/plain'); const task = state.tasks.find(t => t.id === taskId); if (task && task.column !== dropZone.id) { task.column = dropZone.id; saveState(); render(); } }
+function handleAddSubtask(form) { const task = state.tasks.find(t => t.id === state.activeModalTaskId); const input = form.querySelector('input[type="text"]'); if (!task || !input.value.trim()) return; task.subtasks.push({ id: `subtask-${Date.now()}`, text: input.value.trim(), isCompleted: false, dueDate: null }); input.value = ''; saveState(); renderSubtasks(); render(); }
+function handleSubtaskInteraction(e) { const subtaskEl = e.target.closest('.gtd-subtask-item'); if (!subtaskEl) return; const task = state.tasks.find(t => t.id === state.activeModalTaskId); const subtask = task.subtasks.find(st => st.id === subtaskEl.dataset.subtaskId); if (!subtask) return; if (e.target.matches('input[type="checkbox"]')) { subtask.isCompleted = e.target.checked; } else if (e.target.matches('.gtd-subtask-delete-btn')) { task.subtasks = task.subtasks.filter(st => st.id !== subtask.id); } else if (e.target.matches('input[type="date"]')) { subtask.dueDate = e.target.value || null; } else { return; } saveState(); renderSubtasks(); render(); }
+
+// --- Event Listener Setup ---
+function addEventListeners() {
+    if (isInitialized) return;
+    appRootElement.addEventListener('click', (e) => {
+        const addTaskBtn = e.target.closest('.add-task-btn');
+        if (addTaskBtn) { const columnId = addTaskBtn.closest('.gtd-column').querySelector('.task-list').id; openTaskComposer(columnId); return; }
+        const taskCard = e.target.closest('.task-card');
+        if (taskCard) { openTaskDetailModal(taskCard.dataset.taskId); return; }
+        const detailModal = e.target.closest('#gtd-task-modal');
+        if (detailModal) { if (e.target.closest('.gtd-modal-close-btn') || e.target === detailModal) { closeTaskDetailModal(); } else if (e.target.closest('.gtd-category-option')) { handleCategoryUpdate(e); } return; }
+        const composerModal = e.target.closest('#gtd-composer-modal');
+        if (composerModal) {
+            if (e.target.closest('.gtd-modal-close-btn') || e.target === composerModal) { closeTaskComposer(); }
+            else if (e.target.closest('#gtd-composer-date-btn')) { const dateBtn = e.target.closest('#gtd-composer-date-btn'); const categoryBtn = composerModal.querySelector('#gtd-composer-category-btn'); const datePicker = composerModal.querySelector('#gtd-composer-duedate'); const categoryPicker = composerModal.querySelector('#gtd-composer-category-selector'); const isBecomingActive = dateBtn.classList.toggle('active'); datePicker.classList.toggle('visible', isBecomingActive); categoryBtn.classList.remove('active'); categoryPicker.classList.remove('visible'); }
+            else if (e.target.closest('#gtd-composer-category-btn')) { const categoryBtn = e.target.closest('#gtd-composer-category-btn'); const dateBtn = composerModal.querySelector('#gtd-composer-date-btn'); const categoryPicker = composerModal.querySelector('#gtd-composer-category-selector'); const datePicker = composerModal.querySelector('#gtd-composer-duedate'); const isBecomingActive = categoryBtn.classList.toggle('active'); categoryPicker.classList.toggle('visible', isBecomingActive); dateBtn.classList.remove('active'); datePicker.classList.remove('visible'); }
+            else if (e.target.closest('#gtd-composer-add-btn')) { handleAddTaskFromComposer(); }
+            else if (e.target.closest('.gtd-category-option')) { const target = e.target.closest('.gtd-category-option'); const currentlyActive = target.parentElement.querySelector('.active'); if (currentlyActive) currentlyActive.classList.remove('active'); if (currentlyActive !== target) target.classList.add('active'); }
+            return;
+        }
+    });
+    appRootElement.addEventListener('input', (e) => { if (e.target.matches('#gtd-modal-notes')) handleNoteUpdate(e); if (e.target.matches('#gtd-composer-task-name')) handleComposerInput(e); });
+    appRootElement.addEventListener('change', (e) => { if (e.target.matches('#gtd-modal-duedate')) handleDueDateUpdate(e); });
+    appRootElement.addEventListener('dragstart', handleDragAndDrop);
+    appRootElement.addEventListener('dragend', handleDragAndDrop);
+    appRootElement.addEventListener('dragover', e => e.preventDefault());
+    appRootElement.addEventListener('drop', handleDrop);
+    const detailModal = appRootElement.querySelector('#gtd-task-modal');
+    detailModal.querySelector('.gtd-add-subtask-form').addEventListener('submit', e => { e.preventDefault(); handleAddSubtask(e.target); });
+    detailModal.querySelector('.gtd-subtask-list').addEventListener('click', handleSubtaskInteraction);
+    detailModal.querySelector('.gtd-subtask-list').addEventListener('change', handleSubtaskInteraction);
+    isInitialized = true;
+}
+
+// --- App Initializer ---
+export function init(api, rootElement) {
+    console.log("GTD Board App Final (Sub-tasks & Auto-Sort) initialized.");
+    dashboardAPI = api;
+    appRootElement = rootElement;
+
+    const savedState = dashboardAPI.loadData(APP_ID, 'tasks');
+    if (savedState && savedState.tasks) {
+        state.tasks = savedState.tasks.map(task => ({ ...task, notes: task.notes || '', dueDate: task.dueDate || null, category: task.category || null, subtasks: task.subtasks || [] }));
+    } else {
+        const initialTodos = dashboardAPI.getActiveTodos() || [];
+        state.tasks = initialTodos.map(todo => ({ id: `task-${Date.now()}-${Math.random()}`, text: todo.text, column: 'gtd-today', notes: '', dueDate: null, category: null, subtasks: [] }));
+    }
+
+    const todayString = new Date().toISOString().split('T')[0];
+    let wasChanged = false;
+    state.tasks.forEach(task => {
+        if (task.dueDate === todayString && task.column !== 'gtd-today') {
+            task.column = 'gtd-today';
+            wasChanged = true;
+        }
+    });
+    if (wasChanged) saveState();
+    
+    render();
+    addEventListeners();
 }
