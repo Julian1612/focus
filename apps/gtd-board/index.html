@@ -8,11 +8,13 @@
         --gtd-border-subtle: rgba(255, 255, 255, 0.07);
         --gtd-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
         --gtd-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+        --success-color: #32d74b;
+        --danger-color: #ff3b30;
     }
 
     /* --- Base Layout --- */
     .gtd-board-wrapper { height: 100%; width: 100%; box-sizing: border-box; background-color: var(--bg-color); padding: 16px 24px; display: flex; flex-direction: column; }
-    .gtd-board-columns { flex-grow: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; min-height: 0; }
+    .gtd-board-columns { flex-grow: 1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; min-height: 0; }
     .gtd-column { display: flex; flex-direction: column; background-color: var(--gtd-column-color); border-radius: 12px; max-height: 100%; }
     .gtd-column-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--gtd-border-subtle); flex-shrink: 0; }
     .gtd-column-header h3 { margin: 0; font-size: 1rem; font-weight: 500; color: var(--text-primary); }
@@ -25,8 +27,13 @@
     /* --- Task Card --- */
     .task-card { background-color: var(--card-color); border-radius: 8px; padding: 12px; margin-bottom: 8px; border: 1px solid var(--border-color); font-size: 0.95rem; color: var(--text-primary); cursor: pointer; word-wrap: break-word; box-shadow: var(--gtd-shadow-sm); transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
     .task-card:hover { transform: translateY(-2px); box-shadow: var(--gtd-shadow-md); border-color: var(--accent-color); }
+    
     .category-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; color: #fff; text-transform: uppercase; }
-    .category--work { background-color: #5e5ce6; } .category--personal { background-color: #32d74b; } .category--study { background-color: #64d2ff; } .category--urgent { background-color: #ff9f0a; }
+    .category--focus { background-color: #af52de; } 
+    .category--projekt { background-color: #5e5ce6; } 
+    .category--lernen { background-color: #32d74b; } 
+    .category--organisation { background-color: #ff9f0a; }
+
     .due-date-badge { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 500; border-radius: 6px; padding: 3px 8px; margin-top: 10px; width: fit-content; }
     .due-date-badge::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; }
     .due-date-badge { color: var(--text-secondary); } .due-date-badge--today { color: #ff9f0a; } .due-date-badge--overdue { color: #ff453a; }
@@ -34,6 +41,17 @@
     .subtask-progress-bar-container { flex-grow: 1; background-color: var(--gtd-column-color); height: 6px; border-radius: 3px; overflow: hidden; }
     .subtask-progress-bar { background-color: var(--text-secondary); height: 100%; width: 0%; transition: width 0.3s ease; }
     .subtask-progress-text { font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); }
+
+    /* --- Styling für "promotete" Sub-Task-Karten --- */
+    .task-card.is-promoted-subtask { border-left: 3px solid var(--accent-color); cursor: pointer; }
+    .category--subtask { background-color: #8E8E93; }
+    .promoted-subtask-parent { font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px; font-style: italic; }
+
+    /* Styling für erledigte Aufgaben */
+    #gtd-done .task-card { opacity: 0.6; }
+    #gtd-done .task-card:hover { opacity: 1; }
+    #gtd-done .task-card .task-card-content { text-decoration: line-through; }
+
 
     /* --- Modals --- */
     .gtd-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
@@ -48,11 +66,13 @@
     .gtd-category-option.active { border-color: currentColor; background-color: var(--card-color); color: var(--text-primary); font-weight: 500; }
     
     /* --- Detail Modal --- */
-    #gtd-task-modal .gtd-modal-content { max-width: 680px; }
+    #gtd-task-modal .gtd-modal-content { max-width: 680px; height: 700px; max-height: 85vh; display: flex; flex-direction: column; }
     .gtd-modal-title { font-size: 1.5rem; font-weight: 600; margin: 0 0 24px 0; width: calc(100% - 40px); color: var(--text-primary); }
     .gtd-modal-duedate { background-color: var(--card-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); padding: 10px 12px; font-family: inherit; font-size: 0.95rem; }
     .gtd-modal-notes { background-color: var(--card-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); width: 100%; height: 100px; padding: 12px; font-family: inherit; font-size: 1rem; resize: vertical; box-sizing: border-box; }
+    #gtd-task-modal #gtd-subtask-container { flex-grow: 1; min-height: 0; display: flex; flex-direction: column; }
     .gtd-subtask-list { list-style: none; margin: 10px 0 0 0; padding: 0; max-height: 150px; overflow-y: auto; }
+    #gtd-task-modal .gtd-subtask-list { max-height: none; flex-grow: 1; overflow-y: auto; padding-right: 8px; }
     .gtd-subtask-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 6px; transition: background-color 0.2s ease; }
     .gtd-subtask-item:hover { background-color: rgba(255,255,255,0.05); }
     .gtd-subtask-item input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent-color); }
@@ -63,7 +83,21 @@
     .gtd-subtask-item:hover .gtd-subtask-delete-btn { opacity: 1; }
     .gtd-add-subtask-form { display: flex; gap: 8px; margin-top: 12px; }
     .gtd-add-subtask-form input[type="text"] { flex-grow: 1; background-color: var(--card-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; color: var(--text-primary); }
+    .gtd-add-subtask-form input[type="date"] { background-color: var(--card-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0 12px; color: var(--text-primary); width: 130px; }
     .gtd-add-subtask-form button { background-color: var(--accent-color); color: white; border: none; border-radius: 8px; padding: 0 16px; cursor: pointer; }
+
+    /* Styling für Modal-Footer und Aktions-Buttons */
+    .gtd-modal-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gtd-border-subtle); display: flex; justify-content: space-between; align-items: center; }
+    .gtd-modal-primary-btn, .gtd-modal-danger-btn, .gtd-modal-secondary-btn { border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 500; font-size: 0.95rem; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+    .gtd-modal-primary-btn { background-color: var(--success-color); color: white; }
+    .gtd-modal-primary-btn:hover { background-color: #28a738; }
+    .gtd-modal-danger-btn { background-color: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); }
+    .gtd-modal-danger-btn:hover { background-color: var(--danger-color); color: white; }
+    .gtd-modal-danger-btn.gtd-modal-danger-btn--solid { background-color: var(--danger-color); color: white; }
+    .gtd-modal-danger-btn.gtd-modal-danger-btn--solid:hover { background-color: #d93128; }
+    .gtd-modal-secondary-btn { background-color: var(--card-color); border: 1px solid var(--border-color); color: var(--text-primary); }
+    .gtd-modal-secondary-btn:hover { border-color: var(--text-secondary); }
+
 
     /* --- Composer Modal --- */
     #gtd-composer-modal .gtd-modal-content { max-width: 560px; display: flex; flex-direction: column; min-height: 190px; }
@@ -78,38 +112,23 @@
     .gtd-composer-meta-buttons button.active { border-color: var(--accent-color); color: var(--accent-color); background-color: var(--gtd-column-color); }
     #gtd-composer-add-btn { background-color: var(--accent-color); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease; }
     #gtd-composer-add-btn:disabled { background-color: var(--border-color); color: var(--text-secondary); cursor: not-allowed; }
+
+    /* --- Bestätigungs-Modal --- */
+    .gtd-confirm-modal-content { max-width: 450px; text-align: center; }
+    .gtd-confirm-modal-content h3 { margin-bottom: 12px; }
+    .gtd-confirm-modal-content p { margin-bottom: 24px; color: var(--text-secondary); }
+    .gtd-confirm-actions { display: flex; justify-content: center; gap: 16px; }
     
     /* --- DESIGN FIX: Footer & Add Button --- */
-    .column-footer {
-        padding: 0 8px 8px 8px;
-        flex-shrink: 0;
-    }
-    .add-task-btn {
-        background-color: transparent;
-        border: 1px dashed var(--border-color);
-        color: var(--text-secondary);
-        border-radius: 8px;
-        width: 100%;
-        padding: 10px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .add-task-btn:hover {
-        background-color: rgba(175, 82, 222, 0.1);
-        border-color: var(--accent-color);
-        border-style: solid;
-        color: var(--accent-color);
-    }
+    .column-footer { padding: 0 8px 8px 8px; flex-shrink: 0; }
+    .add-task-btn { background-color: transparent; border: 1px dashed var(--border-color); color: var(--text-secondary); border-radius: 8px; width: 100%; padding: 10px; font-size: 0.9rem; font-weight: 500; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+    .add-task-btn:hover { background-color: rgba(175, 82, 222, 0.1); border-color: var(--accent-color); border-style: solid; color: var(--accent-color); }
 </style>
 
 <div class="gtd-board-wrapper">
-    <main class="gtd-board-columns"><!-- Columns rendered by JS --></main>
+    <main class="gtd-board-columns"></main>
 </div>
 
-<!-- Task Detail Modal with Sub-tasks -->
 <div class="gtd-modal-overlay" id="gtd-task-modal">
     <div class="gtd-modal-content">
         <button class="gtd-modal-close-btn">&times;</button>
@@ -125,13 +144,18 @@
             <ul class="gtd-subtask-list"></ul>
             <form class="gtd-add-subtask-form">
                 <input type="text" placeholder="Add a new sub-task..." required>
+                <input type="date" class="gtd-add-subtask-date">
                 <button type="submit">+</button>
             </form>
+        </div>
+
+        <div class="gtd-modal-footer">
+            <button id="gtd-complete-task-btn" class="gtd-modal-primary-btn">Als Erledigt markieren</button>
+            <button id="gtd-delete-task-btn" class="gtd-modal-danger-btn">Aufgabe löschen</button>
         </div>
     </div>
 </div>
 
-<!-- Task Composer Modal -->
 <div class="gtd-modal-overlay" id="gtd-composer-modal">
     <div class="gtd-modal-content">
         <button class="gtd-modal-close-btn">&times;</button>
@@ -150,3 +174,13 @@
     </div>
 </div>
 
+<div class="gtd-modal-overlay" id="gtd-confirm-modal">
+    <div class="gtd-modal-content gtd-confirm-modal-content">
+        <h3 id="gtd-confirm-title">Löschen bestätigen</h3>
+        <p id="gtd-confirm-text">Möchten Sie diese Aufgabe wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        <div class="gtd-confirm-actions">
+            <button id="gtd-confirm-cancel-btn" class="gtd-modal-secondary-btn">Abbrechen</button>
+            <button id="gtd-confirm-delete-btn" class="gtd-modal-danger-btn gtd-modal-danger-btn--solid">Löschen</button>
+        </div>
+    </div>
+</div>

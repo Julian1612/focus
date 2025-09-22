@@ -4,7 +4,7 @@
  */
 
 // In a real backend scenario, this list would be fetched from the server.
-const APP_DIRECTORIES = ['focus-fm', 'routine', 'gtd-board'];
+const APP_DIRECTORIES = ['focus-fm', 'gtd-board', 'daily-ritual'];
 
 const rootURL = new URL('../../', import.meta.url);
 const loadedApps = new Map();
